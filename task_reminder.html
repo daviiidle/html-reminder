@@ -1,0 +1,2222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Reminder System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #ffffff;
+            padding: 15px;
+            line-height: 1.4;
+            color: #333;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+            margin: 0 auto;
+            background: none;
+            padding: 0;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+
+        /* Make the main content responsive */
+        .main-content {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: left;
+            color: #222;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+            font-weight: 500;
+        }
+
+        .add-task-form {
+            background: none;
+            padding: 0;
+            border-radius: 0;
+            margin-bottom: 20px;
+            border: none;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 4px;
+            font-weight: 400;
+            color: #666;
+            font-size: 14px;
+        }
+
+        input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 8px 0;
+            border: none;
+            border-bottom: 1px solid #ddd;
+            border-radius: 0;
+            font-size: 14px;
+            background: transparent;
+            transition: border-color 0.2s;
+        }
+
+        input[type="text"]:focus, input[type="number"]:focus {
+            outline: none;
+            border-bottom-color: #000;
+        }
+
+        .btn {
+            background: #000;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 2px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: opacity 0.2s;
+        }
+
+        .btn:hover {
+            opacity: 0.8;
+        }
+
+        .btn-danger {
+            background: #999;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .task-list {
+            margin-top: 20px;
+        }
+
+        .task-item {
+            background: none;
+            border: none;
+            border-bottom: 1px solid #eee;
+            border-radius: 0;
+            padding: 15px 0;
+            margin-bottom: 0;
+            transition: none;
+        }
+
+        .task-item:last-child {
+            border-bottom: none;
+        }
+
+        .task-info {
+            flex-grow: 1;
+        }
+
+        .task-name {
+            font-weight: 400;
+            color: #333;
+            margin-bottom: 3px;
+            font-size: 14px;
+        }
+
+        .task-interval {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .nag-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 2px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1000;
+            max-width: 350px;
+            text-align: center;
+        }
+
+        .nag-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+        }
+
+        .nag-title {
+            color: #333;
+            font-size: 1.2em;
+            font-weight: 400;
+            margin-bottom: 10px;
+        }
+
+        .nag-message {
+            color: #666;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #bbb;
+            font-style: normal;
+            padding: 30px 15px;
+            font-size: 14px;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 15px;
+        }
+
+        .form-group.half {
+            flex: 1;
+        }
+
+        .interval-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .interval-controls input {
+            flex: 0 0 80px;
+        }
+
+        .interval-controls select {
+            flex: 1;
+            padding: 6px 0;
+            border: none;
+            border-bottom: 1px solid #ddd;
+            border-radius: 0;
+            font-size: 13px;
+            background: transparent;
+        }
+
+        .task-datetime {
+            color: #999;
+            font-size: 0.75em;
+            margin-top: 2px;
+            cursor: pointer;
+            padding: 0;
+            border-radius: 0;
+            transition: opacity 0.2s;
+        }
+
+        .task-datetime:hover {
+            opacity: 0.7;
+        }
+
+        .datetime-editing {
+            background: none !important;
+            padding: 0;
+        }
+
+        .datetime-inputs {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .datetime-input {
+            border: 2px solid #007bff;
+            padding: 4px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .datetime-input.date {
+            width: 130px;
+        }
+
+        .datetime-input.time {
+            width: 80px;
+        }
+
+        .task-repeat-info {
+            color: #bbb;
+            font-size: 0.7em;
+            margin-top: 1px;
+        }
+
+        .task-status {
+            color: #888;
+            font-size: 0.8em;
+            font-style: italic;
+            margin-top: 2px;
+        }
+
+        .task-status.paused {
+            color: #aaa;
+            font-size: 0.7em;
+        }
+
+        .task-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .task-list {
+            width: 100%;
+        }
+
+        .task-item {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 15px;
+            align-items: center;
+        }
+
+        @media (max-width: 768px) {
+            .task-item {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            
+            .task-buttons {
+                justify-content: center;
+            }
+        }
+
+        .btn-small {
+            padding: 4px 8px;
+            font-size: 11px;
+        }
+
+        .btn-success {
+            background: #000;
+        }
+
+        .btn-warning {
+            background: #666;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #ccc;
+            color: #333;
+        }
+
+        .editing-form {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .editing-form h3 {
+            margin: 0 0 15px 0;
+            color: #856404;
+        }
+
+        .time-adjust-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .time-adjust-btn {
+            padding: 2px 6px;
+            font-size: 10px;
+            background: #f5f5f5;
+            border: none;
+            border-radius: 1px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .time-adjust-btn:hover {
+            opacity: 0.7;
+        }
+
+        .time-adjust-btn.plus {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+
+        .time-adjust-btn.minus {
+            background: #f0f0f0;
+            color: #666;
+        }
+
+
+        .task-time-controls {
+            margin-top: 2px;
+        }
+
+        .task-name {
+            cursor: pointer;
+            padding: 0;
+            border-radius: 0;
+            transition: opacity 0.2s;
+        }
+
+        .task-name:hover {
+            opacity: 0.7;
+        }
+
+        .task-name-editing {
+            background: none !important;
+            padding: 0;
+        }
+
+        .task-name-input {
+            border: 2px solid #007bff;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: inherit;
+            font-weight: inherit;
+            width: 100%;
+            min-width: 200px;
+        }
+
+        .global-controls {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #e9ecef;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+
+        @media (min-width: 768px) {
+            .global-controls {
+                grid-template-columns: 1fr 1fr;
+                align-items: center;
+            }
+        }
+
+        .global-controls > div {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .adjust-settings {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .adjust-input {
+            width: 50px;
+            padding: 3px 4px;
+            border: none;
+            border-bottom: 1px solid #ddd;
+            border-radius: 0;
+            font-size: 11px;
+            text-align: center;
+            background: transparent;
+        }
+
+        .adjust-settings label {
+            font-size: 11px;
+            color: #888;
+            margin: 0;
+        }
+
+        .settings-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: white;
+            min-width: 280px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-radius: 1px;
+            padding: 12px;
+            z-index: 1000;
+            border: 1px solid #ddd;
+            top: 100%;
+            right: 0;
+            margin-top: 3px;
+        }
+
+        .dropdown-content.show {
+            display: block;
+        }
+
+        .dropdown-section {
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .dropdown-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .dropdown-section h4 {
+            margin: 0 0 8px 0;
+            font-size: 13px;
+            color: #666;
+            font-weight: 400;
+        }
+
+        .minimalist-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+
+        .add-task-toggle {
+            display: none;
+            margin-bottom: 20px;
+        }
+
+        .add-task-toggle.show {
+            display: block;
+        }
+
+        .day-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .day-btn {
+            padding: 8px 12px;
+            border: 2px solid #ddd;
+            background: white;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.3s;
+            min-width: 45px;
+        }
+
+        .day-btn:hover {
+            border-color: #007bff;
+            background: #f8f9ff;
+        }
+
+        .day-btn.active {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+
+        .day-btn.active:hover {
+            background: #0056b3;
+            border-color: #0056b3;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translate(-50%, -50%) rotate(0deg); }
+            10% { transform: translate(-50%, -50%) rotate(-1deg); }
+            20% { transform: translate(-50%, -50%) rotate(1deg); }
+            30% { transform: translate(-50%, -50%) rotate(0deg); }
+            40% { transform: translate(-50%, -50%) rotate(1deg); }
+            50% { transform: translate(-50%, -50%) rotate(-1deg); }
+            60% { transform: translate(-50%, -50%) rotate(0deg); }
+            70% { transform: translate(-50%, -50%) rotate(-1deg); }
+            80% { transform: translate(-50%, -50%) rotate(1deg); }
+            90% { transform: translate(-50%, -50%) rotate(0deg); }
+        }
+
+        .nag-popup.shake {
+            animation: shake 0.5s ease-in-out;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="main-content">
+            <div class="minimalist-header">
+                <h1 style="margin: 0;">Task Reminder</h1>
+                
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <button class="btn" onclick="toggleAddTask()" id="addTaskBtn">+ Add</button>
+                    
+                    <div class="settings-dropdown">
+                        <button class="btn" onclick="toggleSettingsDropdown()" style="background: #999; color: white;">Settings</button>
+                        <div class="dropdown-content" id="settingsDropdown">
+                            
+                            <div class="dropdown-section">
+                                <h4>Timing</h4>
+                                <div class="adjust-settings">
+                                    <label>Nagging interval:</label>
+                                    <input type="number" class="adjust-input" id="nagInterval" value="60" min="1" max="3600" style="width: 80px;">
+                                    <select id="nagUnit" style="padding: 4px 6px; border: 1px solid #ddd; border-radius: 3px; font-size: 12px;">
+                                        <option value="seconds">Seconds</option>
+                                        <option value="minutes" selected>Minutes</option>
+                                    </select>
+                                    <button class="btn btn-secondary btn-small" onclick="saveNagSettings()">Save</button>
+                                </div>
+                                <br>
+                                <div class="adjust-settings">
+                                    <label>Snooze duration:</label>
+                                    <input type="number" class="adjust-input" id="snoozeDuration" value="5" min="1" max="60" style="width: 80px;">
+                                    <span style="font-size: 12px; color: #666;">minutes</span>
+                                    <button class="btn btn-secondary btn-small" onclick="saveSnoozeSettings()">Save</button>
+                                </div>
+                            </div>
+                            
+                            <div class="dropdown-section">
+                                <h4>Quick Adjust (min)</h4>
+                                <div style="display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px;">
+                                    <input type="number" class="adjust-input" id="adjust1" value="-30" min="-999" max="999">
+                                    <input type="number" class="adjust-input" id="adjust2" value="-15" min="-999" max="999">
+                                    <input type="number" class="adjust-input" id="adjust3" value="-5" min="-999" max="999">
+                                    <input type="number" class="adjust-input" id="adjust4" value="-1" min="-999" max="999">
+                                    <input type="number" class="adjust-input" id="adjust5" value="1" min="-999" max="999">
+                                    <input type="number" class="adjust-input" id="adjust6" value="5" min="-999" max="999">
+                                    <input type="number" class="adjust-input" id="adjust7" value="15" min="-999" max="999">
+                                    <input type="number" class="adjust-input" id="adjust8" value="30" min="-999" max="999">
+                                </div>
+                                <button class="btn btn-secondary btn-small" onclick="saveAdjustSettings()">Save</button>
+                                <button class="btn btn-secondary btn-small" onclick="resetAdjustSettings()">Reset</button>
+                            </div>
+                            
+                            <div class="dropdown-section">
+                                <h4>Controls</h4>
+                                <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                                    <button class="btn btn-warning btn-small" onclick="pauseAllTasks()">Pause All</button>
+                                    <button class="btn btn-success btn-small" onclick="resumeAllTasks()">Resume All</button>
+                                    <button class="btn btn-small" onclick="testSound()" style="background: #666; color: white;">Test Sound</button>
+                                    <button class="btn btn-small" onclick="triggerTestReminder()" style="background: #666; color: white;">Test Reminder</button>
+                                    <button class="btn btn-small" onclick="toggleDesktopNotifications()" id="notificationToggle" style="background: #666; color: white;">Notifications: OFF</button>
+                                    <button class="btn btn-small" onclick="debugTimers()" style="background: #666; color: white;">Debug</button>
+                                    <button class="btn btn-small" onclick="fixStuckTimers()" style="background: #888; color: white;">Fix Timers</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="editingContainer"></div>
+            
+            <div class="add-task-toggle" id="addTaskForm">
+                <div class="add-task-form">
+                    <div class="form-group">
+                        <label for="taskName">Task Name:</label>
+                        <input type="text" id="taskName" placeholder="Enter task name...">
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group half">
+                            <label for="taskDate">Date:</label>
+                            <input type="date" id="taskDate">
+                        </div>
+                        
+                        <div class="form-group half">
+                            <label for="taskTime">Time:</label>
+                            <input type="time" id="taskTime">
+                            <div class="time-adjust-controls" id="formTimeControls">
+                                <span style="font-size: 12px; color: #666;">Quick adjust:</span>
+                                <!-- Dynamic buttons will be inserted here -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Quick Day Selection:</label>
+                        <div class="day-buttons">
+                            <button type="button" class="day-btn" data-day="1">Mon</button>
+                            <button type="button" class="day-btn" data-day="2">Tue</button>
+                            <button type="button" class="day-btn" data-day="3">Wed</button>
+                            <button type="button" class="day-btn" data-day="4">Thu</button>
+                            <button type="button" class="day-btn" data-day="5">Fri</button>
+                            <button type="button" class="day-btn" data-day="6">Sat</button>
+                            <button type="button" class="day-btn" data-day="0">Sun</button>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="isRepeating"> Repeat this reminder
+                        </label>
+                    </div>
+                    
+                    <div class="form-group" id="intervalGroup" style="display: none;">
+                        <label for="repeatType">Repeat pattern:</label>
+                        <select id="repeatType">
+                            <option value="daily">Daily</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="biweekly">Bi-weekly (every 2 weeks)</option>
+                            <option value="monthly">Monthly</option>
+                            <option value="quarterly">Quarterly (every 3 months)</option>
+                            <option value="biannually">Semi-annually (every 6 months)</option>
+                            <option value="annually">Annually (every year)</option>
+                            <option value="custom">Custom interval</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group" id="customIntervalGroup" style="display: none;">
+                        <label for="reminderInterval">Custom repeat every:</label>
+                        <div class="interval-controls">
+                            <input type="number" id="reminderInterval" min="1" value="1">
+                            <select id="intervalUnit">
+                                <option value="minutes">Minutes</option>
+                                <option value="hours">Hours</option>
+                                <option value="days">Days</option>
+                                <option value="weeks">Weeks</option>
+                                <option value="months">Months</option>
+                                <option value="years">Years</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn" onclick="addTask()" id="submitBtn">Add Task</button>
+                        <button class="btn btn-secondary" onclick="toggleAddTask()">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        
+        <div class="task-list">
+            <h2>Active Tasks:</h2>
+            <div id="taskContainer">
+                <div class="empty-state">
+                    No tasks added yet. Add your first task above!
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <script>
+        let tasks = [];
+        let taskIdCounter = 0;
+        let editingTaskId = null;
+        let adjustValues = [-30, -15, -5, -1, 1, 5, 15, 30]; // Default quick adjust values
+        let nagIntervalSeconds = 60; // Default nagging interval (60 seconds = 1 minute)
+        let desktopNotificationsEnabled = false; // Desktop notifications toggle
+        let snoozeMinutes = 5; // Default snooze duration
+
+        // Sound functionality
+        let audioContext = null;
+
+        function initAudioContext() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            
+            // Resume context if suspended (required for Chrome autoplay policy)
+            if (audioContext.state === 'suspended') {
+                return audioContext.resume();
+            }
+            return Promise.resolve();
+        }
+
+        // Notification functionality
+        function requestNotificationPermission() {
+            if ('Notification' in window && Notification.permission === 'default') {
+                Notification.requestPermission().then(permission => {
+                    if (permission === 'granted') {
+                        console.log('✅ Desktop notifications enabled');
+                    } else {
+                        console.log('❌ Desktop notifications denied');
+                    }
+                });
+            }
+        }
+
+        function showDesktopNotification(task) {
+            if ('Notification' in window && Notification.permission === 'granted' && desktopNotificationsEnabled) {
+                const notification = new Notification('⏰ Task Reminder', {
+                    body: task.name,
+                    icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="50" font-size="50" text-anchor="middle" x="50">⏰</text></svg>',
+                    badge: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="50" font-size="50" text-anchor="middle" x="50">📋</text></svg>',
+                    tag: `task-${task.id}`,
+                    requireInteraction: true, // Keeps notification visible until user interacts
+                    silent: false // Allow system sound
+                });
+
+                // Auto-close after 10 seconds if user doesn't interact
+                setTimeout(() => {
+                    notification.close();
+                }, 10000);
+
+                // Handle notification click
+                notification.onclick = function() {
+                    window.focus();
+                    notification.close();
+                };
+
+                console.log('🔔 Desktop notification sent:', task.name);
+                return notification;
+            }
+            return null;
+        }
+
+        function playNotificationSound() {
+            initAudioContext().then(() => {
+                try {
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    // Create a more noticeable triple beep pattern
+                    const startTime = audioContext.currentTime;
+                    
+                    // First beep - high pitch
+                    oscillator.frequency.setValueAtTime(1000, startTime);
+                    gainNode.gain.setValueAtTime(0, startTime);
+                    gainNode.gain.linearRampToValueAtTime(0.3, startTime + 0.02);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + 0.15);
+                    
+                    // Second beep - medium pitch
+                    oscillator.frequency.setValueAtTime(800, startTime + 0.2);
+                    gainNode.gain.setValueAtTime(0.3, startTime + 0.2);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + 0.35);
+                    
+                    // Third beep - high pitch
+                    oscillator.frequency.setValueAtTime(1000, startTime + 0.4);
+                    gainNode.gain.setValueAtTime(0.3, startTime + 0.4);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + 0.55);
+                    
+                    oscillator.start(startTime);
+                    oscillator.stop(startTime + 0.6);
+                    
+                    console.log('🔊 Notification sound played');
+                } catch (error) {
+                    console.error('Sound playback error:', error);
+                    // Fallback notification
+                    if (window.Notification && Notification.permission === 'granted') {
+                        new Notification('Task Reminder', { 
+                            body: 'Audio not available - showing visual notification',
+                            icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="50" font-size="50">⏰</text></svg>'
+                        });
+                    }
+                }
+            }).catch(error => {
+                console.error('Audio context error:', error);
+            });
+        }
+
+        // Test sound function
+        function testSound() {
+            // Enable audio context through user interaction
+            initAudioContext().then(() => {
+                playNotificationSound();
+                alert('🔊 Test sound played! If you didn\'t hear anything, check your browser\'s sound settings.');
+            });
+        }
+
+        // Test reminder function
+        function triggerTestReminder() {
+            const testTask = {
+                id: 'test',
+                name: '🧪 Test Reminder - This is a sample notification to test the popup and sound system!',
+                dateTime: Date.now(),
+                isRepeating: false
+            };
+            
+            // Initialize audio context first, then show popup
+            initAudioContext().then(() => {
+                console.log('🔔 Triggering test reminder...');
+                showNagPopup(testTask);
+            }).catch(error => {
+                console.error('Error initializing audio:', error);
+                // Show popup anyway, even if audio fails
+                showNagPopup(testTask);
+            });
+        }
+
+        // Toggle desktop notifications function
+        function toggleDesktopNotifications() {
+            if (!('Notification' in window)) {
+                alert('❌ This browser does not support desktop notifications.');
+                return;
+            }
+            
+            if (Notification.permission === 'denied') {
+                alert('❌ Desktop notifications are blocked. Please enable them in your browser settings:\n\n1. Click the lock/info icon in the address bar\n2. Allow notifications for this site\n3. Refresh the page');
+                return;
+            }
+            
+            if (Notification.permission !== 'granted') {
+                // Request permission first
+                Notification.requestPermission().then(permission => {
+                    if (permission === 'granted') {
+                        desktopNotificationsEnabled = true;
+                        updateNotificationToggle();
+                        localStorage.setItem('desktopNotificationsEnabled', 'true');
+                        
+                        // Show a test notification
+                        const testNotification = new Notification('🎉 Desktop Notifications Enabled!', {
+                            body: 'You will now receive Windows notifications for your task reminders.',
+                            icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="50" font-size="50" text-anchor="middle" x="50">✅</text></svg>',
+                            requireInteraction: false
+                        });
+                        
+                        setTimeout(() => testNotification.close(), 5000);
+                    } else {
+                        alert('❌ Desktop notifications permission denied.');
+                    }
+                });
+            } else {
+                // Toggle the enabled state
+                desktopNotificationsEnabled = !desktopNotificationsEnabled;
+                updateNotificationToggle();
+                localStorage.setItem('desktopNotificationsEnabled', desktopNotificationsEnabled.toString());
+                
+                if (desktopNotificationsEnabled) {
+                    alert('✅ Desktop notifications enabled!');
+                } else {
+                    alert('🔕 Desktop notifications disabled.');
+                }
+            }
+        }
+
+        function updateNotificationToggle() {
+            const button = document.getElementById('notificationToggle');
+            if (desktopNotificationsEnabled && Notification.permission === 'granted') {
+                button.textContent = 'Notifications: ON';
+                button.style.background = '#28a745';
+                button.style.color = 'white';
+            } else {
+                button.textContent = 'Notifications: OFF';
+                button.style.background = '#6c757d';
+                button.style.color = 'white';
+            }
+        }
+
+        function toggleAddTask() {
+            const form = document.getElementById('addTaskForm');
+            const button = document.getElementById('addTaskBtn');
+            
+            if (form.classList.contains('show')) {
+                form.classList.remove('show');
+                button.textContent = '➕ Add Task';
+            } else {
+                form.classList.add('show');
+                button.textContent = '- Hide';
+                setDefaultDateTime();
+            }
+        }
+
+        function toggleSettingsDropdown() {
+            const dropdown = document.getElementById('settingsDropdown');
+            dropdown.classList.toggle('show');
+            
+            // Close dropdown when clicking outside
+            if (dropdown.classList.contains('show')) {
+                document.addEventListener('click', function closeDropdown(e) {
+                    if (!e.target.closest('.settings-dropdown')) {
+                        dropdown.classList.remove('show');
+                        document.removeEventListener('click', closeDropdown);
+                    }
+                });
+            }
+        }
+
+        function snoozeTask(taskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (!task) return;
+
+            console.log(`💤 Snoozing task "${task.name}" for ${snoozeMinutes} minutes`);
+            
+            // Clear existing nagging timer
+            if (task.timerId) {
+                clearInterval(task.timerId);
+                task.timerId = null;
+            }
+            
+            // Set new timer to resume nagging after snooze period
+            const snoozeMs = snoozeMinutes * 60 * 1000;
+            setTimeout(() => {
+                if (task.status === 'active') {
+                    console.log(`⏰ Snooze ended, resuming nagging for: ${task.name}`);
+                    // Restart nagging cycle
+                    showNagPopup(task);
+                    const nagIntervalMs = nagIntervalSeconds * 1000;
+                    task.timerId = setInterval(() => {
+                        if (task.status === 'active') {
+                            showNagPopup(task);
+                        }
+                    }, nagIntervalMs);
+                }
+            }, snoozeMs);
+            
+            // Close current popup
+            dismissNag();
+        }
+
+        // Load tasks from localStorage on page load
+        function loadTasks() {
+            const savedTasks = localStorage.getItem('taskReminders');
+            const savedCounter = localStorage.getItem('taskReminderCounter');
+            
+            if (savedTasks) {
+                const parsedTasks = JSON.parse(savedTasks);
+                tasks = parsedTasks.map(task => ({
+                    ...task,
+                    status: task.status || 'active', // Default to active for older tasks
+                    repeatType: task.repeatType || 'daily', // Default repeat type
+                    timeAdjusted: task.timeAdjusted || false, // Default to false for older tasks
+                    timerId: null,
+                    initialTimerId: null
+                }));
+                
+                // Filter out very old expired non-repeating tasks (older than 24 hours)
+                const now = new Date().getTime();
+                const oneDayAgo = now - (24 * 60 * 60 * 1000);
+                tasks = tasks.filter(task => {
+                    if (!task.isRepeating && task.dateTime < oneDayAgo) {
+                        console.log(`🗑️ Removing old expired task: ${task.name}`);
+                        return false; // Remove very old expired non-repeating tasks
+                    }
+                    return true;
+                });
+                
+                // Reschedule remaining tasks
+                tasks.forEach(task => {
+                    scheduleTask(task);
+                });
+            }
+            
+            if (savedCounter) {
+                taskIdCounter = parseInt(savedCounter);
+            }
+            
+            renderTasks();
+        }
+
+        // Save tasks to localStorage
+        function saveTasks() {
+            const tasksToSave = tasks.map(task => ({
+                id: task.id,
+                name: task.name,
+                date: task.date,
+                time: task.time,
+                dateTime: task.dateTime,
+                isRepeating: task.isRepeating,
+                repeatType: task.repeatType,
+                interval: task.interval,
+                intervalUnit: task.intervalUnit,
+                status: task.status,
+                timeAdjusted: task.timeAdjusted
+                // Don't save timer IDs as they can't be serialized
+            }));
+            
+            localStorage.setItem('taskReminders', JSON.stringify(tasksToSave));
+            localStorage.setItem('taskReminderCounter', taskIdCounter.toString());
+        }
+
+        function addTask() {
+            const taskName = document.getElementById('taskName').value.trim();
+            const taskDate = document.getElementById('taskDate').value;
+            const taskTime = document.getElementById('taskTime').value;
+            const isRepeating = document.getElementById('isRepeating').checked;
+            const repeatType = document.getElementById('repeatType').value;
+            const reminderInterval = parseInt(document.getElementById('reminderInterval').value);
+            const intervalUnit = document.getElementById('intervalUnit').value;
+
+            if (!taskName) {
+                alert('Please enter a task name!');
+                return;
+            }
+
+            if (!taskDate) {
+                alert('Please select a date!');
+                return;
+            }
+
+            if (!taskTime) {
+                alert('Please select a time!');
+                return;
+            }
+
+            if (isRepeating && repeatType === 'custom' && (!reminderInterval || reminderInterval < 1)) {
+                alert('Please enter a valid repeat interval!');
+                return;
+            }
+
+            // Create datetime object
+            const taskDateTime = new Date(`${taskDate}T${taskTime}`);
+            
+            // Allow past times - they will start nagging immediately
+            const now = new Date();
+            const isPastTime = taskDateTime < now;
+            
+            if (isPastTime) {
+                console.log(`⏰ Creating task with past time - will start nagging immediately`);
+            }
+
+            let task;
+            
+            if (editingTaskId) {
+                // Update existing task
+                const taskIndex = tasks.findIndex(t => t.id === editingTaskId);
+                if (taskIndex !== -1) {
+                    // Clear existing timers
+                    const existingTask = tasks[taskIndex];
+                    if (existingTask.timerId) clearInterval(existingTask.timerId);
+                    if (existingTask.initialTimerId) clearTimeout(existingTask.initialTimerId);
+                    
+                    // Update task
+                    task = {
+                        ...existingTask,
+                        name: taskName,
+                        date: taskDate,
+                        time: taskTime,
+                        dateTime: taskDateTime.getTime(),
+                        isRepeating: isRepeating,
+                        repeatType: repeatType,
+                        interval: reminderInterval,
+                        intervalUnit: intervalUnit,
+                        timeAdjusted: false, // Reset when editing
+                        timerId: null,
+                        initialTimerId: null
+                    };
+                    tasks[taskIndex] = task;
+                }
+                editingTaskId = null;
+                document.getElementById('editingContainer').innerHTML = '';
+            } else {
+                // Create new task
+                task = {
+                    id: ++taskIdCounter,
+                    name: taskName,
+                    date: taskDate,
+                    time: taskTime,
+                    dateTime: taskDateTime.getTime(),
+                    isRepeating: isRepeating,
+                    repeatType: repeatType,
+                    interval: reminderInterval,
+                    intervalUnit: intervalUnit,
+                    status: 'active', // active or paused
+                    timeAdjusted: false, // Track if time has been manually adjusted
+                    timerId: null,
+                    initialTimerId: null
+                };
+                tasks.push(task);
+            }
+
+            scheduleTask(task);
+
+            // Clear form
+            clearForm();
+
+            saveTasks();
+            renderTasks();
+        }
+
+        function clearForm() {
+            document.getElementById('taskName').value = '';
+            document.getElementById('taskDate').value = '';
+            document.getElementById('taskTime').value = '';
+            document.getElementById('isRepeating').checked = false;
+            document.getElementById('repeatType').value = 'daily';
+            document.getElementById('reminderInterval').value = '1';
+            document.getElementById('intervalGroup').style.display = 'none';
+            document.getElementById('customIntervalGroup').style.display = 'none';
+            
+            // Clear day button selections
+            document.querySelectorAll('.day-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Reset button text
+            document.getElementById('submitBtn').textContent = 'Add Task';
+            
+            // Hide the add task form
+            const form = document.getElementById('addTaskForm');
+            const button = document.getElementById('addTaskBtn');
+            form.classList.remove('show');
+            button.textContent = '➕ Add Task';
+            
+            setDefaultDateTime();
+        }
+
+        function scheduleTask(task) {
+            const now = new Date();
+            const taskDateTime = new Date(task.dateTime);
+            const delay = taskDateTime.getTime() - now.getTime();
+
+            console.log(`📅 Scheduling task "${task.name}"`);
+            console.log(`⏰ Current time: ${now.toLocaleString()}`);
+            console.log(`🎯 Target time: ${taskDateTime.toLocaleString()}`);
+            console.log(`⏳ Delay: ${Math.round(delay / 1000)} seconds`);
+
+            if (delay > 0 && task.status === 'active') {
+                // Clear any existing timers first
+                if (task.timerId) clearInterval(task.timerId);
+                if (task.initialTimerId) clearTimeout(task.initialTimerId);
+
+                // Schedule initial reminder
+                console.log(`🔔 Setting timeout for ${Math.round(delay / 1000)} seconds`);
+                task.initialTimerId = setTimeout(() => {
+                    console.log(`🚨 Timer fired for task: ${task.name}`);
+                    if (task.status === 'active') { // Check again in case it was paused
+                        showNagPopup(task);
+                        
+                        // START CONTINUOUS NAGGING - using custom interval
+                        const nagIntervalMs = nagIntervalSeconds * 1000;
+                        console.log(`🔄 Starting continuous nagging every ${nagIntervalSeconds} seconds`);
+                        task.timerId = setInterval(() => {
+                            if (task.status === 'active') {
+                                console.log(`🔁 Continuous nag for: ${task.name}`);
+                                showNagPopup(task);
+                            }
+                        }, nagIntervalMs);
+                    }
+                }, delay);
+            } else if (delay <= 0) {
+                console.log(`⚠️ Task time is in the past, delay: ${delay}ms`);
+                if (task.status === 'active') {
+                    // Clear any existing timers first
+                    if (task.timerId) clearInterval(task.timerId);
+                    if (task.initialTimerId) clearTimeout(task.initialTimerId);
+                    
+                    // Start nagging immediately for past due tasks
+                    console.log(`⚡ Starting immediate continuous nagging for past-time task`);
+                    
+                    // Show first reminder immediately (with small delay to avoid overwhelming)
+                    setTimeout(() => {
+                        if (task.status === 'active') {
+                            showNagPopup(task);
+                        }
+                    }, 1000);
+                    
+                    // Set up continuous nagging using custom interval
+                    const nagIntervalMs = nagIntervalSeconds * 1000;
+                    task.timerId = setInterval(() => {
+                        if (task.status === 'active') {
+                            console.log(`🔁 Continuous nag for past-time task: ${task.name}`);
+                            showNagPopup(task);
+                        }
+                    }, nagIntervalMs);
+                }
+            } else {
+                console.log(`❌ Task not scheduled (inactive or conditions not met)`);
+            }
+        }
+
+        function getRepeatIntervalMs(task) {
+            const { repeatType, interval, intervalUnit } = task;
+            
+            if (repeatType === 'custom') {
+                return getIntervalInMs(interval, intervalUnit);
+            }
+            
+            // Predefined repeat patterns
+            const patterns = {
+                daily: 24 * 60 * 60 * 1000,
+                weekly: 7 * 24 * 60 * 60 * 1000,
+                biweekly: 14 * 24 * 60 * 60 * 1000,
+                monthly: 30 * 24 * 60 * 60 * 1000, // Approximate
+                quarterly: 90 * 24 * 60 * 60 * 1000, // Approximate
+                biannually: 182 * 24 * 60 * 60 * 1000, // Approximate
+                annually: 365 * 24 * 60 * 60 * 1000 // Approximate
+            };
+            
+            return patterns[repeatType] || patterns.daily;
+        }
+
+        function getIntervalInMs(interval, unit) {
+            const multipliers = {
+                minutes: 60 * 1000,
+                hours: 60 * 60 * 1000,
+                days: 24 * 60 * 60 * 1000,
+                weeks: 7 * 24 * 60 * 60 * 1000,
+                months: 30 * 24 * 60 * 60 * 1000,
+                years: 365 * 24 * 60 * 60 * 1000
+            };
+            return interval * multipliers[unit];
+        }
+
+        function removeTask(taskId) {
+            const taskIndex = tasks.findIndex(t => t.id === taskId);
+            if (taskIndex !== -1) {
+                const task = tasks[taskIndex];
+                // Clear both timers
+                if (task.timerId) clearInterval(task.timerId);
+                if (task.initialTimerId) clearTimeout(task.initialTimerId);
+                // Remove from array
+                tasks.splice(taskIndex, 1);
+                saveTasks();
+                renderTasks();
+            }
+        }
+
+        function renderTasks() {
+            const container = document.getElementById('taskContainer');
+            
+            if (tasks.length === 0) {
+                container.innerHTML = '<div class="empty-state">No tasks added yet. Add your first task above!</div>';
+                return;
+            }
+
+            container.innerHTML = tasks.map(task => {
+                const dateTime = new Date(task.dateTime);
+                const dateStr = dateTime.toLocaleDateString();
+                const timeStr = dateTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                
+                let repeatInfo = '';
+                if (task.isRepeating) {
+                    if (task.repeatType === 'custom') {
+                        repeatInfo = `<div class="task-repeat-info">Repeats every ${task.interval} ${task.intervalUnit}</div>`;
+                    } else {
+                        const repeatLabels = {
+                            daily: 'Daily',
+                            weekly: 'Weekly',
+                            biweekly: 'Bi-weekly',
+                            monthly: 'Monthly',
+                            quarterly: 'Quarterly',
+                            biannually: 'Semi-annually',
+                            annually: 'Annually'
+                        };
+                        repeatInfo = `<div class="task-repeat-info">Repeats ${repeatLabels[task.repeatType] || task.repeatType}</div>`;
+                    }
+                }
+
+                let statusInfo = '';
+                if (task.status === 'paused') {
+                    statusInfo = `<div class="task-status paused">Paused</div>`;
+                }
+
+                const toggleButton = task.status === 'active' 
+                    ? `<button class="btn btn-warning btn-small" onclick="toggleTask(${task.id})">Pause</button>`
+                    : `<button class="btn btn-success btn-small" onclick="toggleTask(${task.id})">Resume</button>`;
+
+                return `
+                    <div class="task-item">
+                        <div class="task-info">
+                            <div class="task-name" onclick="editTaskName(${task.id})" title="Click to edit task name">${escapeHtml(task.name)}</div>
+                            <div class="task-datetime" onclick="editTaskDateTime(${task.id})" title="Click to edit date and time">${dateStr} at ${timeStr}</div>
+                            <div class="task-time-controls">
+                                <span style="font-size: 10px; color: #999;">Time:</span>
+                                ${generateTaskTimeButtons(task.id)}
+                            </div>
+                            ${repeatInfo}
+                            ${statusInfo}
+                        </div>
+                        <div class="task-buttons">
+                            ${toggleButton}
+                            <button class="btn btn-success btn-small" onclick="completeTask(${task.id})">Complete</button>
+                            <button class="btn btn-secondary btn-small" onclick="editTask(${task.id})">Edit</button>
+                            <button class="btn btn-danger btn-small" onclick="removeTask(${task.id})">Remove</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function showNagPopup(task) {
+            console.log(`🔔 Showing reminder for: ${task.name}`);
+            
+            // Play notification sound
+            playNotificationSound();
+            
+            // Show desktop notification
+            showDesktopNotification(task);
+            
+            // Remove any existing popup
+            removeExistingPopup();
+
+            // Create overlay
+            const overlay = document.createElement('div');
+            overlay.className = 'nag-overlay';
+            overlay.onclick = () => {}; // Prevent closing by clicking overlay
+
+            // Create popup
+            const popup = document.createElement('div');
+            popup.className = 'nag-popup';
+            popup.innerHTML = `
+                <div class="nag-title">Reminder</div>
+                <div class="nag-message">Don't forget: <strong>${escapeHtml(task.name)}</strong></div>
+                <div style="display: flex; gap: 10px; justify-content: center;">
+                    <button class="btn" onclick="snoozeTask(${task.id})" style="background: #999; color: white;">Snooze ${snoozeMinutes}min</button>
+                    <button class="btn" onclick="dismissNag()">Dismiss</button>
+                </div>
+            `;
+
+            document.body.appendChild(overlay);
+            document.body.appendChild(popup);
+
+            // Add shake animation
+            setTimeout(() => {
+                popup.classList.add('shake');
+            }, 100);
+
+            // Store references for cleanup
+            window.currentNagOverlay = overlay;
+            window.currentNagPopup = popup;
+        }
+
+        function dismissNag() {
+            removeExistingPopup();
+        }
+
+        function removeExistingPopup() {
+            if (window.currentNagOverlay) {
+                document.body.removeChild(window.currentNagOverlay);
+                window.currentNagOverlay = null;
+            }
+            if (window.currentNagPopup) {
+                document.body.removeChild(window.currentNagPopup);
+                window.currentNagPopup = null;
+            }
+        }
+
+        function toggleTask(taskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (!task) return;
+
+            if (task.status === 'active') {
+                // Pause the task
+                task.status = 'paused';
+                if (task.timerId) clearInterval(task.timerId);
+                if (task.initialTimerId) clearTimeout(task.initialTimerId);
+            } else {
+                // Resume the task
+                task.status = 'active';
+                scheduleTask(task);
+            }
+            
+            saveTasks();
+            renderTasks();
+        }
+
+        function completeTask(taskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (!task) return;
+
+            // STOP ALL NAGGING immediately when marked complete
+            console.log(`✅ Completing task: ${task.name}`);
+            if (task.timerId) clearInterval(task.timerId);
+            if (task.initialTimerId) clearTimeout(task.initialTimerId);
+
+            if (!task.isRepeating) {
+                // Non-repeating task, just remove it
+                console.log(`🗑️ Removing completed one-time task: ${task.name}`);
+                removeTask(taskId);
+                return;
+            }
+
+            // For repeating tasks, reschedule for next occurrence
+            console.log(`🔄 Rescheduling repeating task: ${task.name}`);
+            const nextDateTime = calculateNextOccurrence(task);
+            task.dateTime = nextDateTime.getTime();
+            task.date = nextDateTime.toISOString().split('T')[0];
+            task.time = nextDateTime.toTimeString().slice(0, 5);
+            task.timeAdjusted = false; // Reset time adjustment flag
+
+            // Reschedule the task (which will restart nagging cycle when time comes)
+            scheduleTask(task);
+            
+            saveTasks();
+            renderTasks();
+        }
+
+        function calculateNextOccurrence(task) {
+            const current = new Date(task.dateTime);
+            const { repeatType, interval, intervalUnit } = task;
+
+            if (repeatType === 'custom') {
+                return addInterval(current, interval, intervalUnit);
+            }
+
+            // Predefined patterns
+            switch (repeatType) {
+                case 'daily':
+                    return addInterval(current, 1, 'days');
+                case 'weekly':
+                    return addInterval(current, 1, 'weeks');
+                case 'biweekly':
+                    return addInterval(current, 2, 'weeks');
+                case 'monthly':
+                    return addInterval(current, 1, 'months');
+                case 'quarterly':
+                    return addInterval(current, 3, 'months');
+                case 'biannually':
+                    return addInterval(current, 6, 'months');
+                case 'annually':
+                    return addInterval(current, 1, 'years');
+                default:
+                    return addInterval(current, 1, 'days');
+            }
+        }
+
+        function addInterval(date, amount, unit) {
+            const result = new Date(date);
+            
+            switch (unit) {
+                case 'minutes':
+                    result.setMinutes(result.getMinutes() + amount);
+                    break;
+                case 'hours':
+                    result.setHours(result.getHours() + amount);
+                    break;
+                case 'days':
+                    result.setDate(result.getDate() + amount);
+                    break;
+                case 'weeks':
+                    result.setDate(result.getDate() + (amount * 7));
+                    break;
+                case 'months':
+                    result.setMonth(result.getMonth() + amount);
+                    break;
+                case 'years':
+                    result.setFullYear(result.getFullYear() + amount);
+                    break;
+            }
+            
+            return result;
+        }
+
+        function editTask(taskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (!task) return;
+
+            editingTaskId = taskId;
+
+            // Show editing form
+            const editingContainer = document.getElementById('editingContainer');
+            editingContainer.innerHTML = `
+                <div class="editing-form">
+                    <h3>Editing Task</h3>
+                    <button class="btn btn-secondary" onclick="cancelEdit()">Cancel Edit</button>
+                </div>
+            `;
+
+            // Populate form with task data
+            document.getElementById('taskName').value = task.name;
+            document.getElementById('taskDate').value = task.date;
+            document.getElementById('taskTime').value = task.time;
+            document.getElementById('isRepeating').checked = task.isRepeating;
+            document.getElementById('repeatType').value = task.repeatType || 'daily';
+            document.getElementById('reminderInterval').value = task.interval || 1;
+            document.getElementById('intervalUnit').value = task.intervalUnit || 'days';
+
+            // Show/hide appropriate sections
+            document.getElementById('intervalGroup').style.display = task.isRepeating ? 'block' : 'none';
+            document.getElementById('customIntervalGroup').style.display = 
+                (task.isRepeating && task.repeatType === 'custom') ? 'block' : 'none';
+
+            // Update button text
+            document.getElementById('submitBtn').textContent = 'Update Task';
+
+            // Scroll to form
+            document.querySelector('.add-task-form').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function cancelEdit() {
+            editingTaskId = null;
+            document.getElementById('editingContainer').innerHTML = '';
+            clearForm();
+        }
+
+        function editTaskName(taskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (!task) return;
+
+            // Find the task name element
+            const taskNameElements = document.querySelectorAll('.task-name');
+            let targetElement = null;
+            
+            // Find the correct task name element by checking the onclick attribute
+            taskNameElements.forEach(element => {
+                if (element.getAttribute('onclick') === `editTaskName(${taskId})`) {
+                    targetElement = element;
+                }
+            });
+
+            if (!targetElement) return;
+
+            // Create input field
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'task-name-input';
+            input.value = task.name;
+            
+            // Replace the div with input
+            targetElement.className = 'task-name task-name-editing';
+            targetElement.innerHTML = '';
+            targetElement.appendChild(input);
+            
+            // Focus and select text
+            input.focus();
+            input.select();
+
+            // Handle save on Enter or blur
+            const saveEdit = () => {
+                const newName = input.value.trim();
+                if (newName && newName !== task.name) {
+                    task.name = newName;
+                    saveTasks();
+                }
+                renderTasks(); // Re-render to show updated name
+            };
+
+            const cancelTaskEdit = () => {
+                renderTasks(); // Re-render to cancel edit
+            };
+
+            input.addEventListener('blur', saveEdit);
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    saveEdit();
+                } else if (e.key === 'Escape') {
+                    cancelTaskEdit();
+                }
+            });
+        }
+
+        function editTaskDateTime(taskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (!task) return;
+
+            // Find the task datetime element
+            const taskDateTimeElements = document.querySelectorAll('.task-datetime');
+            let targetElement = null;
+            
+            // Find the correct task datetime element by checking the onclick attribute
+            taskDateTimeElements.forEach(element => {
+                if (element.getAttribute('onclick') === `editTaskDateTime(${taskId})`) {
+                    targetElement = element;
+                }
+            });
+
+            if (!targetElement) return;
+
+            // Create date and time inputs
+            const taskDateTime = new Date(task.dateTime);
+            const currentDate = taskDateTime.toISOString().split('T')[0];
+            const currentTime = taskDateTime.toTimeString().slice(0, 5);
+
+            const inputContainer = document.createElement('div');
+            inputContainer.className = 'datetime-inputs';
+            
+            const dateInput = document.createElement('input');
+            dateInput.type = 'date';
+            dateInput.className = 'datetime-input date';
+            dateInput.value = currentDate;
+            
+            const timeInput = document.createElement('input');
+            timeInput.type = 'time';
+            timeInput.className = 'datetime-input time';
+            timeInput.value = currentTime;
+
+            inputContainer.appendChild(dateInput);
+            inputContainer.appendChild(timeInput);
+            
+            // Replace the div with inputs
+            targetElement.className = 'task-datetime datetime-editing';
+            targetElement.innerHTML = '';
+            targetElement.appendChild(inputContainer);
+            
+            // Focus the date input
+            dateInput.focus();
+
+            // Handle save on Enter, Tab, or blur
+            const saveDateTime = () => {
+                const newDate = dateInput.value;
+                const newTime = timeInput.value;
+                
+                if (newDate && newTime) {
+                    const newDateTime = new Date(`${newDate}T${newTime}`);
+                    
+                    if (newDateTime.getTime() !== task.dateTime) {
+                        console.log(`📅 Updating task "${task.name}" datetime from ${new Date(task.dateTime).toLocaleString()} to ${newDateTime.toLocaleString()}`);
+                        
+                        // Clear existing timers
+                        if (task.timerId) clearInterval(task.timerId);
+                        if (task.initialTimerId) clearTimeout(task.initialTimerId);
+                        
+                        // Update task
+                        task.dateTime = newDateTime.getTime();
+                        task.date = newDate;
+                        task.time = newTime;
+                        task.timeAdjusted = false; // Reset adjustment flag
+                        
+                        // Reschedule if active
+                        if (task.status === 'active') {
+                            scheduleTask(task);
+                        }
+                        
+                        saveTasks();
+                    }
+                }
+                renderTasks(); // Re-render to show updated datetime
+            };
+
+            const cancelDateTime = () => {
+                renderTasks(); // Re-render to cancel edit
+            };
+
+            // Event handlers
+            [dateInput, timeInput].forEach(input => {
+                input.addEventListener('blur', saveDateTime);
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        saveDateTime();
+                    } else if (e.key === 'Escape') {
+                        cancelDateTime();
+                    } else if (e.key === 'Tab' && e.target === timeInput) {
+                        // Save when tabbing out of time input
+                        setTimeout(saveDateTime, 100);
+                    }
+                });
+            });
+        }
+
+        function adjustFormTime(minutesToAdd) {
+            const timeInput = document.getElementById('taskTime');
+            const currentTime = timeInput.value;
+            
+            if (!currentTime) {
+                // If no time set, use current time
+                const now = new Date();
+                timeInput.value = now.toTimeString().slice(0, 5);
+            }
+            
+            const newTime = adjustTimeString(timeInput.value, minutesToAdd);
+            timeInput.value = newTime;
+        }
+
+        function adjustTaskTime(taskId, minutesToAdd) {
+            const task = tasks.find(t => t.id === taskId);
+            if (!task) return;
+
+            // Clear existing timers
+            if (task.timerId) clearInterval(task.timerId);
+            if (task.initialTimerId) clearTimeout(task.initialTimerId);
+
+            let baseDateTime;
+            
+            if (!task.timeAdjusted) {
+                // First adjustment: use current time as base
+                baseDateTime = new Date();
+                task.timeAdjusted = true; // Mark as adjusted
+                console.log(`📅 First adjustment - using current time: ${baseDateTime.toLocaleTimeString()}`);
+            } else {
+                // Subsequent adjustments: use existing task time
+                baseDateTime = new Date(task.dateTime);
+                console.log(`📅 Subsequent adjustment - using task time: ${baseDateTime.toLocaleTimeString()}`);
+            }
+
+            // Apply the adjustment
+            const adjustedDateTime = new Date(baseDateTime.getTime() + (minutesToAdd * 60 * 1000));
+
+            // Update task with new time
+            task.dateTime = adjustedDateTime.getTime();
+            task.date = adjustedDateTime.toISOString().split('T')[0];
+            task.time = adjustedDateTime.toTimeString().slice(0, 5);
+
+            // Reschedule if active
+            if (task.status === 'active') {
+                scheduleTask(task);
+            }
+
+            saveTasks();
+            renderTasks();
+            
+            // Show confirmation
+            const timeStr = adjustedDateTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            const sign = minutesToAdd >= 0 ? '+' : '';
+            console.log(`⏰ Task "${task.name}" adjusted ${sign}${minutesToAdd}m → ${timeStr}`);
+        }
+
+        function adjustTimeString(timeString, minutesToAdd) {
+            const [hours, minutes] = timeString.split(':').map(Number);
+            const date = new Date();
+            date.setHours(hours, minutes, 0, 0);
+            date.setMinutes(date.getMinutes() + minutesToAdd);
+            
+            return date.toTimeString().slice(0, 5);
+        }
+
+        function generateTaskTimeButtons(taskId) {
+            return adjustValues.map(value => {
+                const className = value < 0 ? 'minus' : 'plus';
+                const displayValue = Math.abs(value);
+                const sign = value < 0 ? '-' : '+';
+                return `<button class="time-adjust-btn ${className}" onclick="adjustTaskTime(${taskId}, ${value})">${sign}${displayValue}m</button>`;
+            }).join('');
+        }
+
+        function updateFormTimeButtons() {
+            const container = document.getElementById('formTimeControls');
+            const label = container.querySelector('span');
+            
+            container.innerHTML = '';
+            container.appendChild(label);
+            
+            adjustValues.forEach(value => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = value < 0 ? 'time-adjust-btn minus' : 'time-adjust-btn plus';
+                btn.onclick = () => adjustFormTime(value);
+                const displayValue = Math.abs(value);
+                const sign = value < 0 ? '-' : '+';
+                btn.textContent = `${sign}${displayValue}m`;
+                container.appendChild(btn);
+            });
+        }
+
+        function pauseAllTasks() {
+            let pausedCount = 0;
+            tasks.forEach(task => {
+                if (task.status === 'active') {
+                    task.status = 'paused';
+                    if (task.timerId) clearInterval(task.timerId);
+                    if (task.initialTimerId) clearTimeout(task.initialTimerId);
+                    pausedCount++;
+                }
+            });
+            
+            saveTasks();
+            renderTasks();
+            
+            if (pausedCount > 0) {
+                alert(`⏸️ Paused ${pausedCount} active task${pausedCount > 1 ? 's' : ''}.`);
+            } else {
+                alert('ℹ️ No active tasks to pause.');
+            }
+        }
+
+        function resumeAllTasks() {
+            let resumedCount = 0;
+            tasks.forEach(task => {
+                if (task.status === 'paused') {
+                    task.status = 'active';
+                    scheduleTask(task);
+                    resumedCount++;
+                }
+            });
+            
+            saveTasks();
+            renderTasks();
+            
+            if (resumedCount > 0) {
+                alert(`▶️ Resumed ${resumedCount} paused task${resumedCount > 1 ? 's' : ''}.`);
+            } else {
+                alert('ℹ️ No paused tasks to resume.');
+            }
+        }
+
+        function saveAdjustSettings() {
+            const values = [
+                parseInt(document.getElementById('adjust1').value) || -30,
+                parseInt(document.getElementById('adjust2').value) || -15,
+                parseInt(document.getElementById('adjust3').value) || -5,
+                parseInt(document.getElementById('adjust4').value) || -1,
+                parseInt(document.getElementById('adjust5').value) || 1,
+                parseInt(document.getElementById('adjust6').value) || 5,
+                parseInt(document.getElementById('adjust7').value) || 15,
+                parseInt(document.getElementById('adjust8').value) || 30
+            ];
+            
+            // Validate values
+            for (let value of values) {
+                if (value < -999 || value > 999 || value === 0) {
+                    alert('⚠️ All values must be between -999 and 999 minutes (excluding 0).');
+                    return;
+                }
+            }
+            
+            adjustValues = values;
+            localStorage.setItem('quickAdjustValues', JSON.stringify(adjustValues));
+            updateFormTimeButtons();
+            renderTasks(); // Refresh to show new buttons
+            alert('💾 Quick adjust values saved!');
+        }
+
+        function resetAdjustSettings() {
+            adjustValues = [-30, -15, -5, -1, 1, 5, 15, 30];
+            document.getElementById('adjust1').value = -30;
+            document.getElementById('adjust2').value = -15;
+            document.getElementById('adjust3').value = -5;
+            document.getElementById('adjust4').value = -1;
+            document.getElementById('adjust5').value = 1;
+            document.getElementById('adjust6').value = 5;
+            document.getElementById('adjust7').value = 15;
+            document.getElementById('adjust8').value = 30;
+            localStorage.setItem('quickAdjustValues', JSON.stringify(adjustValues));
+            updateFormTimeButtons();
+            renderTasks();
+            alert('🔄 Quick adjust values reset to defaults!');
+        }
+
+        function loadAdjustSettings() {
+            const saved = localStorage.getItem('quickAdjustValues');
+            if (saved) {
+                adjustValues = JSON.parse(saved);
+                document.getElementById('adjust1').value = adjustValues[0] || -30;
+                document.getElementById('adjust2').value = adjustValues[1] || -15;
+                document.getElementById('adjust3').value = adjustValues[2] || -5;
+                document.getElementById('adjust4').value = adjustValues[3] || -1;
+                document.getElementById('adjust5').value = adjustValues[4] || 1;
+                document.getElementById('adjust6').value = adjustValues[5] || 5;
+                document.getElementById('adjust7').value = adjustValues[6] || 15;
+                document.getElementById('adjust8').value = adjustValues[7] || 30;
+            }
+            updateFormTimeButtons();
+        }
+
+        function saveNagSettings() {
+            const nagValue = parseInt(document.getElementById('nagInterval').value);
+            const nagUnit = document.getElementById('nagUnit').value;
+            
+            if (!nagValue || nagValue < 1) {
+                alert('⚠️ Nagging interval must be at least 1.');
+                return;
+            }
+            
+            // Convert to seconds
+            if (nagUnit === 'minutes') {
+                nagIntervalSeconds = nagValue * 60;
+            } else {
+                nagIntervalSeconds = nagValue;
+            }
+            
+            // Validate reasonable limits
+            if (nagIntervalSeconds < 1) {
+                alert('⚠️ Minimum nagging interval is 1 second.');
+                return;
+            }
+            
+            if (nagIntervalSeconds > 3600) {
+                alert('⚠️ Maximum nagging interval is 1 hour (3600 seconds).');
+                return;
+            }
+            
+            localStorage.setItem('nagIntervalSeconds', nagIntervalSeconds.toString());
+            
+            // Restart timers for active tasks to use new interval
+            tasks.forEach(task => {
+                if (task.status === 'active' && task.timerId) {
+                    clearInterval(task.timerId);
+                    const nagIntervalMs = nagIntervalSeconds * 1000;
+                    task.timerId = setInterval(() => {
+                        if (task.status === 'active') {
+                            console.log(`🔁 Continuous nag (${nagIntervalSeconds}s interval): ${task.name}`);
+                            showNagPopup(task);
+                        }
+                    }, nagIntervalMs);
+                }
+            });
+            
+            const displayText = nagUnit === 'minutes' ? `${nagValue} minute${nagValue > 1 ? 's' : ''}` : `${nagValue} second${nagValue > 1 ? 's' : ''}`;
+            alert(`💾 Nagging interval set to every ${displayText}!`);
+        }
+
+        function loadNagSettings() {
+            const saved = localStorage.getItem('nagIntervalSeconds');
+            if (saved) {
+                nagIntervalSeconds = parseInt(saved);
+                
+                // Update the UI controls
+                if (nagIntervalSeconds >= 60 && nagIntervalSeconds % 60 === 0) {
+                    // Display in minutes if it's a whole number of minutes
+                    document.getElementById('nagInterval').value = nagIntervalSeconds / 60;
+                    document.getElementById('nagUnit').value = 'minutes';
+                } else {
+                    // Display in seconds
+                    document.getElementById('nagInterval').value = nagIntervalSeconds;
+                    document.getElementById('nagUnit').value = 'seconds';
+                }
+            }
+        }
+
+        function saveSnoozeSettings() {
+            const snoozeValue = parseInt(document.getElementById('snoozeDuration').value);
+            
+            if (!snoozeValue || snoozeValue < 1) {
+                alert('⚠️ Snooze duration must be at least 1 minute.');
+                return;
+            }
+            
+            if (snoozeValue > 60) {
+                alert('⚠️ Maximum snooze duration is 60 minutes.');
+                return;
+            }
+            
+            snoozeMinutes = snoozeValue;
+            localStorage.setItem('snoozeMinutes', snoozeMinutes.toString());
+            
+            alert(`💤 Snooze duration set to ${snoozeMinutes} minute${snoozeMinutes > 1 ? 's' : ''}!`);
+        }
+
+        function loadSnoozeSettings() {
+            const saved = localStorage.getItem('snoozeMinutes');
+            if (saved) {
+                snoozeMinutes = parseInt(saved);
+                document.getElementById('snoozeDuration').value = snoozeMinutes;
+            }
+        }
+
+        function loadNotificationSettings() {
+            const saved = localStorage.getItem('desktopNotificationsEnabled');
+            if (saved === 'true') {
+                desktopNotificationsEnabled = true;
+            }
+            updateNotificationToggle();
+        }
+
+        function debugTimers() {
+            const now = new Date();
+            let debugInfo = `🐛 TIMER DEBUG REPORT\n`;
+            debugInfo += `Current time: ${now.toLocaleString()}\n`;
+            debugInfo += `Nagging interval: ${nagIntervalSeconds} seconds\n`;
+            debugInfo += `Snooze duration: ${snoozeMinutes} minutes\n`;
+            debugInfo += `Desktop notifications: ${desktopNotificationsEnabled ? 'ON' : 'OFF'}\n\n`;
+            
+            if (tasks.length === 0) {
+                debugInfo += '❌ NO TASKS FOUND\n';
+            } else {
+                debugInfo += `📋 FOUND ${tasks.length} TASKS:\n\n`;
+                
+                tasks.forEach((task, index) => {
+                    const taskTime = new Date(task.dateTime);
+                    const delay = taskTime.getTime() - now.getTime();
+                    const delayMinutes = Math.round(delay / (1000 * 60));
+                    
+                    debugInfo += `${index + 1}. "${task.name}"\n`;
+                    debugInfo += `   Status: ${task.status}\n`;
+                    debugInfo += `   Scheduled: ${taskTime.toLocaleString()}\n`;
+                    debugInfo += `   Time diff: ${delayMinutes} minutes\n`;
+                    debugInfo += `   Initial timer: ${task.initialTimerId ? 'SET' : 'NOT SET'}\n`;
+                    debugInfo += `   Nag timer: ${task.timerId ? 'RUNNING' : 'NOT RUNNING'}\n`;
+                    debugInfo += `   Repeating: ${task.isRepeating ? 'YES' : 'NO'}\n`;
+                    
+                    if (delay <= 0 && task.status === 'active' && !task.timerId) {
+                        debugInfo += `   ⚠️ PROBLEM: Should be nagging but no timer!\n`;
+                    } else if (delay <= 0 && task.status === 'active' && task.timerId) {
+                        const minutesOverdue = Math.abs(delayMinutes);
+                        debugInfo += `   ✅ ACTIVE: Nagging (${minutesOverdue}min overdue)\n`;
+                    } else if (delay > 0 && task.status === 'active') {
+                        debugInfo += `   ⏳ Waiting: Will start in ${delayMinutes} minutes\n`;
+                    } else if (task.status === 'paused') {
+                        debugInfo += `   ⏸️ Paused: No nagging expected\n`;
+                    }
+                    debugInfo += `\n`;
+                });
+            }
+            
+            // Also log to console for detailed inspection
+            console.log('=== DETAILED DEBUG INFO ===');
+            console.log('Tasks array:', tasks);
+            console.log('Nag interval seconds:', nagIntervalSeconds);
+            console.log('Current time:', now);
+            
+            // Show in a more readable popup
+            const popup = document.createElement('div');
+            popup.style.cssText = `
+                position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+                background: white; border: 2px solid #333; border-radius: 8px;
+                padding: 20px; max-width: 600px; max-height: 80vh; overflow-y: auto;
+                font-family: monospace; font-size: 12px; white-space: pre-line;
+                z-index: 10000; box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            `;
+            popup.innerHTML = `<div style="margin-bottom: 15px;"><strong>🐛 Timer Status Debug</strong></div>
+                              <div style="background: #f5f5f5; padding: 10px; border-radius: 4px;">${debugInfo}</div>
+                              <button onclick="this.parentElement.remove()" style="margin-top: 15px; padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">Close</button>`;
+            
+            document.body.appendChild(popup);
+        }
+
+        function fixStuckTimers() {
+            const now = new Date();
+            let fixedCount = 0;
+            
+            console.log('🔧 Checking for stuck timers...');
+            
+            tasks.forEach(task => {
+                if (task.status === 'active') {
+                    const taskTime = new Date(task.dateTime);
+                    const delay = taskTime.getTime() - now.getTime();
+                    
+                    // If task is overdue but has no nagging timer, fix it
+                    if (delay <= 0 && !task.timerId) {
+                        console.log(`🔧 Fixing stuck timer for: ${task.name}`);
+                        
+                        // Clear any existing timers first
+                        if (task.initialTimerId) clearTimeout(task.initialTimerId);
+                        if (task.timerId) clearInterval(task.timerId);
+                        
+                        // Start nagging immediately
+                        showNagPopup(task);
+                        
+                        // Set up continuous nagging
+                        const nagIntervalMs = nagIntervalSeconds * 1000;
+                        task.timerId = setInterval(() => {
+                            if (task.status === 'active') {
+                                console.log(`🔁 Fixed timer nag: ${task.name}`);
+                                showNagPopup(task);
+                            }
+                        }, nagIntervalMs);
+                        
+                        fixedCount++;
+                    }
+                    
+                    // If task is future but has no initial timer, fix it
+                    else if (delay > 0 && !task.initialTimerId && !task.timerId) {
+                        console.log(`🔧 Rescheduling future task: ${task.name}`);
+                        scheduleTask(task);
+                        fixedCount++;
+                    }
+                }
+            });
+            
+            if (fixedCount > 0) {
+                alert(`🔧 Fixed ${fixedCount} stuck timer${fixedCount > 1 ? 's' : ''}!`);
+            } else {
+                alert('✅ All timers are working correctly!');
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Toggle repeat interval visibility
+        document.getElementById('isRepeating').addEventListener('change', function() {
+            const intervalGroup = document.getElementById('intervalGroup');
+            intervalGroup.style.display = this.checked ? 'block' : 'none';
+            
+            // Also hide custom interval if unchecked
+            if (!this.checked) {
+                document.getElementById('customIntervalGroup').style.display = 'none';
+            }
+        });
+
+        // Toggle custom interval visibility based on repeat type
+        document.getElementById('repeatType').addEventListener('change', function() {
+            const customIntervalGroup = document.getElementById('customIntervalGroup');
+            customIntervalGroup.style.display = this.value === 'custom' ? 'block' : 'none';
+        });
+
+        // Day button selection
+        document.querySelectorAll('.day-btn').forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                const targetDay = parseInt(this.dataset.day);
+                
+                // Clear previous selections
+                document.querySelectorAll('.day-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                
+                // Activate clicked button
+                this.classList.add('active');
+                
+                // Set date to next occurrence of this day
+                setDateToNextOccurrence(targetDay);
+            });
+        });
+
+        function setDateToNextOccurrence(targetDay) {
+            const now = new Date();
+            const currentDay = now.getDay();
+            
+            // Calculate days until target day
+            let daysUntil = targetDay - currentDay;
+            if (daysUntil <= 0) {
+                daysUntil += 7; // Next week
+            }
+            
+            // Set the date
+            const targetDate = new Date(now);
+            targetDate.setDate(now.getDate() + daysUntil);
+            
+            const dateStr = targetDate.toISOString().split('T')[0];
+            document.getElementById('taskDate').value = dateStr;
+        }
+
+        // Set default date/time to current
+        function setDefaultDateTime() {
+            const now = new Date();
+            const today = now.toISOString().split('T')[0];
+            const currentTime = now.toTimeString().slice(0, 5);
+            
+            document.getElementById('taskDate').value = today;
+            document.getElementById('taskTime').value = currentTime;
+        }
+
+        // Handle Enter key in form fields
+        document.getElementById('taskName').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addTask();
+            }
+        });
+
+        document.getElementById('reminderInterval').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addTask();
+            }
+        });
+
+        // Initialize the app when page loads
+        window.addEventListener('load', function() {
+            setDefaultDateTime();
+            loadAdjustSettings();
+            loadNagSettings();
+            loadSnoozeSettings();
+            loadNotificationSettings();
+            loadTasks();
+            
+            // Check notification permission status and inform user
+            checkNotificationStatus();
+        });
+
+        function checkNotificationStatus() {
+            if ('Notification' in window) {
+                if (Notification.permission === 'default') {
+                    console.log('💡 Desktop notifications available - click "🔔 Enable Desktop Notifications" to enable');
+                } else if (Notification.permission === 'granted') {
+                    console.log('✅ Desktop notifications are enabled');
+                } else {
+                    console.log('❌ Desktop notifications are blocked');
+                }
+            } else {
+                console.log('❌ Desktop notifications not supported in this browser');
+            }
+        }
+
+        // Clean up timers when page is closed
+        window.addEventListener('beforeunload', function() {
+            tasks.forEach(task => {
+                if (task.timerId) clearInterval(task.timerId);
+                if (task.initialTimerId) clearTimeout(task.initialTimerId);
+            });
+        });
+    </script>
+</body>
+</html>

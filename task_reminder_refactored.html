@@ -1,0 +1,2207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Reminder System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #ffffff;
+            padding: 15px;
+            line-height: 1.4;
+            color: #333;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+            margin: 0 auto;
+            background: none;
+            padding: 0;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .main-content {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: left;
+            color: #222;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+            font-weight: 500;
+        }
+
+        .add-task-form {
+            background: none;
+            padding: 0;
+            border-radius: 0;
+            margin-bottom: 20px;
+            border: none;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 4px;
+            font-weight: 400;
+            color: #666;
+            font-size: 14px;
+        }
+
+        input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 8px 0;
+            border: none;
+            border-bottom: 1px solid #ddd;
+            border-radius: 0;
+            font-size: 14px;
+            background: transparent;
+            transition: border-color 0.2s;
+        }
+
+        input[type="text"]:focus, input[type="number"]:focus {
+            outline: none;
+            border-bottom-color: #000;
+        }
+
+        .btn {
+            background: #000;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 2px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: opacity 0.2s;
+        }
+
+        .btn:hover {
+            opacity: 0.8;
+        }
+
+        .btn-danger {
+            background: #999;
+        }
+
+        .btn-success {
+            background: #000;
+        }
+
+        .btn-warning {
+            background: #666;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #ccc;
+            color: #333;
+        }
+
+        .task-item {
+            background: none;
+            border: none;
+            border-bottom: 1px solid #eee;
+            border-radius: 0;
+            padding: 15px 0;
+            margin-bottom: 0;
+            transition: none;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .task-item:last-child {
+            border-bottom: none;
+        }
+
+        .task-info {
+            flex: 1;
+            margin-right: 10px;
+        }
+
+        .task-name {
+            font-weight: 400;
+            color: #333;
+            margin-bottom: 3px;
+            font-size: 14px;
+            cursor: pointer;
+            padding: 0;
+            border-radius: 0;
+            transition: opacity 0.2s;
+        }
+
+        .task-name:hover {
+            opacity: 0.7;
+        }
+
+        .task-datetime {
+            color: #999;
+            font-size: 0.75em;
+            margin-top: 2px;
+            cursor: pointer;
+            padding: 0;
+            border-radius: 0;
+            transition: opacity 0.2s;
+        }
+
+        .task-datetime:hover {
+            opacity: 0.7;
+        }
+
+        .datetime-editing {
+            background: none !important;
+            padding: 0;
+        }
+
+        .datetime-inputs {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .datetime-input {
+            border: 2px solid #007bff;
+            padding: 4px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .datetime-input.date {
+            width: 130px;
+        }
+
+        .datetime-input.time {
+            width: 80px;
+        }
+
+        .task-repeat-info {
+            color: #bbb;
+            font-size: 0.7em;
+            margin-top: 1px;
+        }
+
+        .task-status.paused {
+            color: #aaa;
+            font-size: 0.7em;
+        }
+
+        .task-buttons {
+            display: flex;
+            flex-direction: row;
+            gap: 4px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-small {
+            padding: 4px 8px;
+            font-size: 11px;
+        }
+
+        .time-adjust-btn {
+            padding: 2px 6px;
+            font-size: 10px;
+            background: #f5f5f5;
+            border: none;
+            border-radius: 1px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .time-adjust-btn:hover {
+            opacity: 0.7;
+        }
+
+        .time-adjust-btn.plus {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .time-adjust-btn.minus {
+            background: #f0f0f0;
+            color: #666;
+        }
+
+        .task-time-controls {
+            margin-top: 2px;
+        }
+
+        .task-name-editing {
+            background: none !important;
+            padding: 0;
+        }
+
+        .task-name-input {
+            border: 2px solid #007bff;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: inherit;
+            font-weight: inherit;
+            width: 100%;
+            min-width: 200px;
+        }
+
+        .minimalist-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        @media (max-width: 768px) {
+            .minimalist-header {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+            }
+            
+            .minimalist-header > div {
+                justify-content: center;
+            }
+        }
+
+        .settings-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: white;
+            min-width: 280px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-radius: 1px;
+            padding: 12px;
+            z-index: 1000;
+            border: 1px solid #ddd;
+            top: 100%;
+            right: 0;
+            margin-top: 3px;
+        }
+
+        .dropdown-content.show {
+            display: block;
+        }
+
+        .dropdown-section {
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .dropdown-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .dropdown-section h4 {
+            margin: 0 0 8px 0;
+            font-size: 13px;
+            color: #666;
+            font-weight: 400;
+        }
+
+        .adjust-settings {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .adjust-input {
+            width: 50px;
+            padding: 3px 4px;
+            border: none;
+            border-bottom: 1px solid #ddd;
+            border-radius: 0;
+            font-size: 11px;
+            text-align: center;
+            background: transparent;
+        }
+
+        .adjust-settings label {
+            font-size: 11px;
+            color: #888;
+            margin: 0;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #bbb;
+            font-style: normal;
+            padding: 30px 15px;
+            font-size: 14px;
+        }
+
+        .nag-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+        }
+
+        .nag-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 2px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1000;
+            max-width: 350px;
+            text-align: center;
+        }
+
+        .nag-title {
+            color: #333;
+            font-size: 1.2em;
+            font-weight: 400;
+            margin-bottom: 10px;
+        }
+
+        .nag-message {
+            color: #666;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .nag-popup.shake {
+            animation: shake 0.5s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translate(-50%, -50%) translateX(0); }
+            25% { transform: translate(-50%, -50%) translateX(-5px); }
+            75% { transform: translate(-50%, -50%) translateX(5px); }
+        }
+
+        .form-row {
+            display: flex;
+            gap: 15px;
+            align-items: end;
+        }
+
+        .form-row > .form-group {
+            flex: 1;
+        }
+
+        .interval-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .interval-controls select {
+            flex: 1;
+            padding: 6px 0;
+            border: none;
+            border-bottom: 1px solid #ddd;
+            border-radius: 0;
+            font-size: 13px;
+            background: transparent;
+        }
+
+        input[type="date"], input[type="time"] {
+            padding: 6px 0;
+            border: none;
+            border-bottom: 1px solid #ddd;
+            border-radius: 0;
+            font-size: 13px;
+            background: transparent;
+        }
+        
+        input[type="checkbox"] {
+            margin-right: 6px;
+        }
+
+        #intervalGroup, #customIntervalGroup {
+            display: none;
+        }
+
+        .day-selector {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 15px;
+        }
+
+        .day-btn {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            background: white;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .day-btn:hover, .day-btn.active {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+
+        .add-task-form {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            background: #fafafa;
+            border-radius: 8px;
+            border: 1px solid #eee;
+        }
+
+        .add-task-form.show {
+            display: block;
+        }
+
+        .editing-form {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .editing-form h3 {
+            margin: 0 0 15px 0;
+            color: #856404;
+        }
+
+        @media (max-width: 768px) {
+            .task-item {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+            
+            .task-buttons {
+                justify-content: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="main-content">
+            <div class="minimalist-header">
+                <h1 style="margin: 0;">Task Reminder</h1>
+                
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <button class="btn" onclick="uiController.toggleAddTask()" id="addTaskBtn">+ Add</button>
+                    
+                    <div class="settings-dropdown">
+                        <button class="btn" onclick="uiController.toggleSettingsDropdown()" style="background: #999; color: white;">Settings</button>
+                        <div class="dropdown-content" id="settingsDropdown">
+                            
+                            <div class="dropdown-section">
+                                <h4>Timing</h4>
+                                <div class="adjust-settings">
+                                    <label>Nagging interval:</label>
+                                    <input type="number" class="adjust-input" id="nagInterval" value="60" min="1" max="3600" style="width: 80px;">
+                                    <select id="nagUnit" style="padding: 4px 6px; border: 1px solid #ddd; border-radius: 3px; font-size: 12px;">
+                                        <option value="seconds">Seconds</option>
+                                        <option value="minutes" selected>Minutes</option>
+                                    </select>
+                                    <button class="btn btn-secondary btn-small" onclick="settingsManager.saveNagSettings()">Save</button>
+                                </div>
+                                <br>
+                                <div class="adjust-settings">
+                                    <label>Snooze duration:</label>
+                                    <input type="number" class="adjust-input" id="snoozeDuration" value="5" min="1" max="60" style="width: 80px;">
+                                    <span style="font-size: 12px; color: #666;">minutes</span>
+                                    <button class="btn btn-secondary btn-small" onclick="settingsManager.saveSnoozeSettings()">Save</button>
+                                </div>
+                            </div>
+                            
+                            <div class="dropdown-section">
+                                <h4>Quick Adjust (min)</h4>
+                                <div style="display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px;">
+                                    <input type="number" class="adjust-input" id="adjust1" value="-30" min="-999" max="999">
+                                    <input type="number" class="adjust-input" id="adjust2" value="-15" min="-999" max="999">
+                                    <input type="number" class="adjust-input" id="adjust3" value="-5" min="-999" max="999">
+                                    <input type="number" class="adjust-input" id="adjust4" value="-1" min="-999" max="999">
+                                    <input type="number" class="adjust-input" id="adjust5" value="1" min="-999" max="999">
+                                    <input type="number" class="adjust-input" id="adjust6" value="5" min="-999" max="999">
+                                    <input type="number" class="adjust-input" id="adjust7" value="15" min="-999" max="999">
+                                    <input type="number" class="adjust-input" id="adjust8" value="30" min="-999" max="999">
+                                </div>
+                                <button class="btn btn-secondary btn-small" onclick="settingsManager.saveAdjustSettings()">Save</button>
+                                <button class="btn btn-secondary btn-small" onclick="settingsManager.resetAdjustSettings()">Reset</button>
+                            </div>
+                            
+                            <div class="dropdown-section">
+                                <h4>Controls</h4>
+                                <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                                    <button class="btn btn-warning btn-small" onclick="taskManager.pauseAllTasks()">Pause All</button>
+                                    <button class="btn btn-success btn-small" onclick="taskManager.resumeAllTasks()">Resume All</button>
+                                    <button class="btn btn-small" onclick="notificationService.testSound()" style="background: #666; color: white;">Test Sound</button>
+                                    <button class="btn btn-small" onclick="notificationService.triggerTestReminder()" style="background: #666; color: white;">Test Reminder</button>
+                                    <button class="btn btn-small" onclick="settingsManager.toggleDesktopNotifications()" id="notificationToggle" style="background: #666; color: white;">Notifications: OFF</button>
+                                    <button class="btn btn-small" onclick="debugService.debugTimers()" style="background: #666; color: white;">Debug</button>
+                                    <button class="btn btn-small" onclick="debugService.fixStuckTimers()" style="background: #888; color: white;">Fix Timers</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="editingContainer"></div>
+
+            <div class="add-task-form" id="addTaskForm">
+                <div class="form-group">
+                    <label for="taskName">Task Name:</label>
+                    <input type="text" id="taskName" placeholder="Enter your task">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="taskDate">Date:</label>
+                        <input type="date" id="taskDate">
+                    </div>
+                    <div class="form-group">
+                        <label for="taskTime">Time:</label>
+                        <input type="time" id="taskTime">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="isRepeating"> Repeating Task
+                    </label>
+                </div>
+
+                <div id="intervalGroup">
+                    <div class="form-group">
+                        <label for="repeatType">Repeat Pattern:</label>
+                        <select id="repeatType">
+                            <option value="daily">Daily</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="biweekly">Bi-weekly</option>
+                            <option value="monthly">Monthly</option>
+                            <option value="quarterly">Quarterly</option>
+                            <option value="biannually">Semi-annually</option>
+                            <option value="annually">Annually</option>
+                            <option value="custom">Custom Interval</option>
+                        </select>
+                    </div>
+
+                    <div id="customIntervalGroup">
+                        <div class="interval-controls">
+                            <label>Every:</label>
+                            <input type="number" id="reminderInterval" min="1" value="1">
+                            <select id="intervalUnit">
+                                <option value="minutes">Minutes</option>
+                                <option value="hours">Hours</option>
+                                <option value="days" selected>Days</option>
+                                <option value="weeks">Weeks</option>
+                                <option value="months">Months</option>
+                                <option value="years">Years</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <button class="btn" onclick="taskManager.addTask()" id="submitBtn">Add Task</button>
+                </div>
+            </div>
+
+            <div id="taskContainer"></div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * Task Reminder System
+         * A modular, maintainable task management application
+         * 
+         * Architecture:
+         * - Separation of concerns with dedicated services
+         * - Single responsibility principle
+         * - Dependency injection pattern
+         * - Observer pattern for state management
+         * - Strategy pattern for task scheduling
+         */
+
+        // ============================================================================
+        // CORE STATE MANAGEMENT
+        // ============================================================================
+
+        /**
+         * Centralized application state management
+         */
+        class AppState {
+            constructor() {
+                this.tasks = [];
+                this.taskIdCounter = 1;
+                this.editingTaskId = null;
+                this.adjustValues = [-30, -15, -5, -1, 1, 5, 15, 30];
+                this.nagIntervalSeconds = 60;
+                this.snoozeMinutes = 5;
+                this.desktopNotificationsEnabled = false;
+                this.audioContext = null;
+                this.soundEnabled = true;
+            }
+            
+            getNextTaskId() {
+                return this.taskIdCounter++;
+            }
+            
+            findTask(id) {
+                return this.tasks.find(task => task.id === parseInt(id));
+            }
+            
+            addTask(task) {
+                this.tasks.push(task);
+            }
+            
+            removeTask(id) {
+                this.tasks = this.tasks.filter(task => task.id !== parseInt(id));
+            }
+        }
+
+        // ============================================================================
+        // STORAGE SERVICE
+        // ============================================================================
+
+        /**
+         * Handles all localStorage operations with consistent APIs
+         */
+        class StorageService {
+            constructor() {
+                this.KEYS = {
+                    TASKS: 'taskReminders',
+                    COUNTER: 'taskReminderCounter',
+                    NAG_INTERVAL: 'nagIntervalSeconds',
+                    SNOOZE: 'snoozeMinutes',
+                    NOTIFICATIONS: 'desktopNotificationsEnabled',
+                    ADJUST_VALUES: 'quickAdjustValues'
+                };
+            }
+            
+            saveTasks(tasks, counter) {
+                const tasksToSave = tasks.map(task => ({
+                    id: task.id,
+                    name: task.name,
+                    date: task.date,
+                    time: task.time,
+                    dateTime: task.dateTime,
+                    isRepeating: task.isRepeating,
+                    repeatType: task.repeatType,
+                    interval: task.interval,
+                    intervalUnit: task.intervalUnit,
+                    status: task.status,
+                    timeAdjusted: task.timeAdjusted
+                }));
+                
+                localStorage.setItem(this.KEYS.TASKS, JSON.stringify(tasksToSave));
+                localStorage.setItem(this.KEYS.COUNTER, counter.toString());
+            }
+            
+            loadTasks() {
+                const savedTasks = localStorage.getItem(this.KEYS.TASKS);
+                const savedCounter = localStorage.getItem(this.KEYS.COUNTER);
+                
+                return {
+                    tasks: savedTasks ? JSON.parse(savedTasks) : [],
+                    counter: savedCounter ? parseInt(savedCounter) : 1
+                };
+            }
+            
+            saveSetting(key, value) {
+                localStorage.setItem(key, typeof value === 'object' ? JSON.stringify(value) : value.toString());
+            }
+            
+            loadSetting(key, defaultValue) {
+                const saved = localStorage.getItem(key);
+                if (!saved) return defaultValue;
+                
+                if (typeof defaultValue === 'boolean') return saved === 'true';
+                if (typeof defaultValue === 'object') return JSON.parse(saved);
+                if (typeof defaultValue === 'number') return parseFloat(saved);
+                return saved;
+            }
+        }
+
+        // ============================================================================
+        // AUDIO SERVICE
+        // ============================================================================
+
+        /**
+         * Manages audio notifications with proper error handling
+         */
+        class AudioService {
+            constructor(state) {
+                this.state = state;
+            }
+            
+            async playNotificationSound() {
+                if (!this.state.soundEnabled) return;
+                
+                try {
+                    await this.initializeAudioContext();
+                    this.playBeepSequence();
+                } catch (error) {
+                    console.warn('Could not play notification sound:', error);
+                }
+            }
+            
+            async initializeAudioContext() {
+                if (!this.state.audioContext) {
+                    this.state.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                
+                if (this.state.audioContext.state === 'suspended') {
+                    await this.state.audioContext.resume();
+                }
+            }
+            
+            playBeepSequence() {
+                for (let i = 0; i < 3; i++) {
+                    setTimeout(() => this.playBeep(), i * 150);
+                }
+            }
+            
+            playBeep() {
+                const oscillator = this.state.audioContext.createOscillator();
+                const gainNode = this.state.audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(this.state.audioContext.destination);
+                
+                oscillator.frequency.setValueAtTime(800, this.state.audioContext.currentTime);
+                gainNode.gain.setValueAtTime(0.1, this.state.audioContext.currentTime);
+                
+                oscillator.start(this.state.audioContext.currentTime);
+                oscillator.stop(this.state.audioContext.currentTime + 0.1);
+            }
+        }
+
+        // ============================================================================
+        // DESKTOP NOTIFICATION SERVICE
+        // ============================================================================
+
+        /**
+         * Handles desktop notifications with proper permissions
+         */
+        class DesktopNotificationService {
+            constructor(state) {
+                this.state = state;
+            }
+            
+            async showDesktopNotification(task) {
+                if (!this.state.desktopNotificationsEnabled || !this.hasPermission()) {
+                    return;
+                }
+                
+                try {
+                    const notification = this.createNotification(task);
+                    this.autoCloseNotification(notification);
+                } catch (error) {
+                    console.warn('Could not show desktop notification:', error);
+                }
+            }
+            
+            hasPermission() {
+                return 'Notification' in window && Notification.permission === 'granted';
+            }
+            
+            createNotification(task) {
+                return new Notification('Task Reminder', {
+                    body: `Don't forget: ${task.name}`,
+                    icon: this.getNotificationIcon(),
+                    tag: `task-${task.id}`,
+                    requireInteraction: true,
+                    silent: false
+                });
+            }
+            
+            getNotificationIcon() {
+                return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiByeD0iOCIgZmlsbD0iIzAwN2JmZiIvPgo8cGF0aCBkPSJNMjAgMjBIMjBWNDRINDRWMjBIMjBaIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiLz4KPHBhdGggZD0iTTI4IDMyTDMyIDM2TDQwIDI4IiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgo8L3N2Zz4K';
+            }
+            
+            autoCloseNotification(notification) {
+                setTimeout(() => notification?.close(), 5000);
+            }
+        }
+
+        // ============================================================================
+        // NOTIFICATION SERVICE (FACADE)
+        // ============================================================================
+
+        /**
+         * Unified notification interface combining audio and desktop notifications
+         */
+        class NotificationService {
+            constructor(state) {
+                this.audioService = new AudioService(state);
+                this.desktopService = new DesktopNotificationService(state);
+                this.state = state;
+                this.currentPopup = null;
+            }
+            
+            async showReminder(task) {
+                console.log(`🔔 Showing reminder for: ${task.name}`);
+                
+                await this.audioService.playNotificationSound();
+                await this.desktopService.showDesktopNotification(task);
+                this.showNagPopup(task);
+            }
+            
+            showNagPopup(task) {
+                this.removeExistingPopup();
+                
+                const { overlay, popup } = this.createPopupElements(task);
+                
+                document.body.append(overlay, popup);
+                
+                this.addShakeAnimation(popup);
+                this.storePopupReferences(overlay, popup);
+            }
+            
+            createPopupElements(task) {
+                const overlay = this.createOverlay();
+                const popup = this.createPopup(task);
+                return { overlay, popup };
+            }
+            
+            createOverlay() {
+                const overlay = document.createElement('div');
+                overlay.className = 'nag-overlay';
+                overlay.onclick = () => {}; // Prevent closing by clicking overlay
+                return overlay;
+            }
+            
+            createPopup(task) {
+                const popup = document.createElement('div');
+                popup.className = 'nag-popup';
+                popup.innerHTML = `
+                    <div class="nag-title">Reminder</div>
+                    <div class="nag-message">Don't forget: <strong>${this.escapeHtml(task.name)}</strong></div>
+                    <div style="display: flex; gap: 10px; justify-content: center;">
+                        <button class="btn" onclick="taskManager.snoozeTask(${task.id})" style="background: #999; color: white;">Snooze ${this.state.snoozeMinutes}min</button>
+                        <button class="btn" onclick="notificationService.dismissPopup()">Dismiss</button>
+                    </div>
+                `;
+                return popup;
+            }
+            
+            addShakeAnimation(popup) {
+                setTimeout(() => popup.classList.add('shake'), 100);
+            }
+            
+            storePopupReferences(overlay, popup) {
+                window.currentNagOverlay = overlay;
+                window.currentNagPopup = popup;
+            }
+            
+            dismissPopup() {
+                this.removeExistingPopup();
+            }
+            
+            removeExistingPopup() {
+                [window.currentNagOverlay, window.currentNagPopup].forEach(element => {
+                    if (element && element.parentNode) {
+                        element.parentNode.removeChild(element);
+                    }
+                });
+                window.currentNagOverlay = null;
+                window.currentNagPopup = null;
+            }
+            
+            escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+            
+            async testSound() {
+                await this.audioService.playNotificationSound();
+            }
+            
+            triggerTestReminder() {
+                const testTask = {
+                    id: 999999,
+                    name: 'Test Reminder Task',
+                    dateTime: new Date().getTime()
+                };
+                
+                this.showNagPopup(testTask);
+            }
+        }
+
+        // ============================================================================
+        // TASK SCHEDULING SERVICE
+        // ============================================================================
+
+        /**
+         * Handles task scheduling with timer management
+         */
+        class TaskScheduler {
+            constructor(state, notificationService) {
+                this.state = state;
+                this.notificationService = notificationService;
+            }
+            
+            scheduleTask(task) {
+                console.log(`📅 Scheduling task: ${task.name}`);
+                
+                this.clearTaskTimers(task);
+                
+                const now = new Date();
+                const taskTime = new Date(task.dateTime);
+                const delay = taskTime.getTime() - now.getTime();
+                
+                console.log(`⏰ Task "${task.name}" scheduled for ${taskTime.toLocaleString()}`);
+                console.log(`⏱️ Delay: ${Math.round(delay / (1000 * 60))} minutes`);
+                
+                if (delay <= 0) {
+                    this.startImmediateNagging(task);
+                } else {
+                    this.scheduleInitialReminder(task, delay);
+                }
+            }
+            
+            clearTaskTimers(task) {
+                if (task.timerId) {
+                    clearInterval(task.timerId);
+                    task.timerId = null;
+                }
+                if (task.initialTimerId) {
+                    clearTimeout(task.initialTimerId);
+                    task.initialTimerId = null;
+                }
+            }
+            
+            startImmediateNagging(task) {
+                console.log(`🚨 Task "${task.name}" is overdue - starting immediate nagging`);
+                this.notificationService.showReminder(task);
+                this.startContinuousNagging(task);
+            }
+            
+            scheduleInitialReminder(task, delay) {
+                console.log(`⏳ Setting initial timer for ${Math.round(delay / (1000 * 60))} minutes`);
+                task.initialTimerId = setTimeout(() => {
+                    if (task.status === 'active') {
+                        console.log(`⏰ Task time reached: ${task.name}`);
+                        this.notificationService.showReminder(task);
+                        this.startContinuousNagging(task);
+                    }
+                }, delay);
+            }
+            
+            startContinuousNagging(task) {
+                const nagIntervalMs = this.state.nagIntervalSeconds * 1000;
+                task.timerId = setInterval(() => {
+                    if (task.status === 'active') {
+                        console.log(`🔁 Continuous nag (${this.state.nagIntervalSeconds}s interval): ${task.name}`);
+                        this.notificationService.showReminder(task);
+                    }
+                }, nagIntervalMs);
+            }
+        }
+
+        // ============================================================================
+        // TASK MANAGEMENT SERVICE
+        // ============================================================================
+
+        /**
+         * Core task management operations
+         */
+        class TaskManager {
+            constructor(state, scheduler, storageService, notificationService) {
+                this.state = state;
+                this.scheduler = scheduler;
+                this.storage = storageService;
+                this.notificationService = notificationService;
+            }
+            
+            addTask() {
+                const formData = this.getFormData();
+                
+                if (!this.validateFormData(formData)) return;
+                
+                const taskDateTime = new Date(`${formData.taskDate}T${formData.taskTime}`);
+                
+                let task;
+                if (this.state.editingTaskId) {
+                    task = this.updateExistingTask(formData, taskDateTime);
+                } else {
+                    task = this.createNewTask(formData, taskDateTime);
+                }
+                
+                if (!task) return;
+                
+                this.scheduler.scheduleTask(task);
+                uiController.clearForm();
+                this.saveAndRender();
+            }
+            
+            getFormData() {
+                return {
+                    taskName: document.getElementById('taskName').value.trim(),
+                    taskDate: document.getElementById('taskDate').value,
+                    taskTime: document.getElementById('taskTime').value,
+                    isRepeating: document.getElementById('isRepeating').checked,
+                    repeatType: document.getElementById('repeatType').value,
+                    reminderInterval: parseInt(document.getElementById('reminderInterval').value),
+                    intervalUnit: document.getElementById('intervalUnit').value
+                };
+            }
+            
+            validateFormData(data) {
+                const validations = [
+                    [!data.taskName, 'Please enter a task name!'],
+                    [!data.taskDate || !data.taskTime, 'Please select a date and time!'],
+                    [data.isRepeating && data.repeatType === 'custom' && (!data.reminderInterval || data.reminderInterval < 1), 'Please enter a valid repeat interval!']
+                ];
+                
+                for (const [condition, message] of validations) {
+                    if (condition) {
+                        alert(message);
+                        return false;
+                    }
+                }
+                return true;
+            }
+            
+            createNewTask(formData, taskDateTime) {
+                const task = {
+                    id: this.state.getNextTaskId(),
+                    name: formData.taskName,
+                    date: formData.taskDate,
+                    time: formData.taskTime,
+                    dateTime: taskDateTime.getTime(),
+                    isRepeating: formData.isRepeating,
+                    repeatType: formData.isRepeating ? formData.repeatType : null,
+                    interval: (formData.isRepeating && formData.repeatType === 'custom') ? formData.reminderInterval : null,
+                    intervalUnit: (formData.isRepeating && formData.repeatType === 'custom') ? formData.intervalUnit : null,
+                    status: 'active',
+                    timeAdjusted: false,
+                    timerId: null,
+                    initialTimerId: null
+                };
+                
+                this.state.addTask(task);
+                console.log(`➕ Created new task: ${task.name}`);
+                return task;
+            }
+            
+            updateExistingTask(formData, taskDateTime) {
+                const existingTask = this.state.findTask(this.state.editingTaskId);
+                if (!existingTask) {
+                    console.error('Task not found for editing');
+                    return null;
+                }
+                
+                this.scheduler.clearTaskTimers(existingTask);
+                
+                Object.assign(existingTask, {
+                    name: formData.taskName,
+                    date: formData.taskDate,
+                    time: formData.taskTime,
+                    dateTime: taskDateTime.getTime(),
+                    isRepeating: formData.isRepeating,
+                    repeatType: formData.isRepeating ? formData.repeatType : null,
+                    interval: (formData.isRepeating && formData.repeatType === 'custom') ? formData.reminderInterval : null,
+                    intervalUnit: (formData.isRepeating && formData.repeatType === 'custom') ? formData.intervalUnit : null,
+                    timeAdjusted: false
+                });
+                
+                this.state.editingTaskId = null;
+                document.getElementById('editingContainer').innerHTML = '';
+                console.log(`✏️ Updated task: ${existingTask.name}`);
+                return existingTask;
+            }
+            
+            removeTask(taskId) {
+                console.log(`🗑️ Removing task: ${taskId}`);
+                
+                const task = this.state.findTask(taskId);
+                if (task) {
+                    this.scheduler.clearTaskTimers(task);
+                    this.state.removeTask(taskId);
+                    this.saveAndRender();
+                    console.log(`✅ Task removed: ${task.name}`);
+                }
+            }
+            
+            toggleTask(taskId) {
+                const task = this.state.findTask(taskId);
+                if (!task) return;
+                
+                if (task.status === 'active') {
+                    task.status = 'paused';
+                    this.scheduler.clearTaskTimers(task);
+                } else {
+                    task.status = 'active';
+                    this.scheduler.scheduleTask(task);
+                }
+                
+                this.saveAndRender();
+            }
+            
+            completeTask(taskId) {
+                const task = this.state.findTask(taskId);
+                if (!task) return;
+                
+                console.log(`✅ Completing task: ${task.name}`);
+                this.scheduler.clearTaskTimers(task);
+                
+                if (!task.isRepeating) {
+                    this.removeTask(taskId);
+                    return;
+                }
+                
+                console.log(`🔄 Rescheduling repeating task: ${task.name}`);
+                const nextDateTime = this.calculateNextOccurrence(task);
+                task.dateTime = nextDateTime.getTime();
+                task.date = nextDateTime.toISOString().split('T')[0];
+                task.time = nextDateTime.toTimeString().slice(0, 5);
+                task.timeAdjusted = false;
+                
+                this.scheduler.scheduleTask(task);
+                this.saveAndRender();
+            }
+            
+            snoozeTask(taskId) {
+                const task = this.state.findTask(taskId);
+                if (!task) return;
+                
+                console.log(`💤 Snoozing task "${task.name}" for ${this.state.snoozeMinutes} minutes`);
+                
+                this.scheduler.clearTaskTimers(task);
+                
+                const snoozeMs = this.state.snoozeMinutes * 60 * 1000;
+                setTimeout(() => {
+                    if (task.status === 'active') {
+                        console.log(`⏰ Snooze ended, resuming nagging for: ${task.name}`);
+                        this.notificationService.showReminder(task);
+                        this.scheduler.startContinuousNagging(task);
+                    }
+                }, snoozeMs);
+                
+                this.notificationService.dismissPopup();
+            }
+            
+            pauseAllTasks() {
+                let pausedCount = 0;
+                this.state.tasks.forEach(task => {
+                    if (task.status === 'active') {
+                        task.status = 'paused';
+                        this.scheduler.clearTaskTimers(task);
+                        pausedCount++;
+                    }
+                });
+                
+                this.saveAndRender();
+                
+                const message = pausedCount > 0 
+                    ? `⏸️ Paused ${pausedCount} active task${pausedCount > 1 ? 's' : ''}.`
+                    : 'ℹ️ No active tasks to pause.';
+                alert(message);
+            }
+            
+            resumeAllTasks() {
+                let resumedCount = 0;
+                this.state.tasks.forEach(task => {
+                    if (task.status === 'paused') {
+                        task.status = 'active';
+                        this.scheduler.scheduleTask(task);
+                        resumedCount++;
+                    }
+                });
+                
+                this.saveAndRender();
+                
+                const message = resumedCount > 0 
+                    ? `▶️ Resumed ${resumedCount} paused task${resumedCount > 1 ? 's' : ''}.`
+                    : 'ℹ️ No paused tasks to resume.';
+                alert(message);
+            }
+            
+            calculateNextOccurrence(task) {
+                const current = new Date(task.dateTime);
+                const { repeatType, interval, intervalUnit } = task;
+                
+                if (repeatType === 'custom') {
+                    return this.addInterval(current, interval, intervalUnit);
+                }
+                
+                const intervalMap = {
+                    daily: [1, 'days'],
+                    weekly: [1, 'weeks'],
+                    biweekly: [2, 'weeks'],
+                    monthly: [1, 'months'],
+                    quarterly: [3, 'months'],
+                    biannually: [6, 'months'],
+                    annually: [1, 'years']
+                };
+                
+                const [amount, unit] = intervalMap[repeatType] || [1, 'days'];
+                return this.addInterval(current, amount, unit);
+            }
+            
+            addInterval(date, amount, unit) {
+                const result = new Date(date);
+                
+                const methodMap = {
+                    minutes: () => result.setMinutes(result.getMinutes() + amount),
+                    hours: () => result.setHours(result.getHours() + amount),
+                    days: () => result.setDate(result.getDate() + amount),
+                    weeks: () => result.setDate(result.getDate() + (amount * 7)),
+                    months: () => result.setMonth(result.getMonth() + amount),
+                    years: () => result.setFullYear(result.getFullYear() + amount)
+                };
+                
+                const method = methodMap[unit];
+                if (method) method();
+                
+                return result;
+            }
+            
+            saveAndRender() {
+                this.storage.saveTasks(this.state.tasks, this.state.taskIdCounter);
+                uiRenderer.renderTasks();
+            }
+        }
+
+        // ============================================================================
+        // UI RENDERING SERVICE
+        // ============================================================================
+
+        /**
+         * Handles all UI rendering operations
+         */
+        class UIRenderer {
+            constructor(state) {
+                this.state = state;
+            }
+            
+            renderTasks() {
+                const container = document.getElementById('taskContainer');
+                
+                if (this.state.tasks.length === 0) {
+                    container.innerHTML = '<div class="empty-state">No tasks added yet. Add your first task above!</div>';
+                    return;
+                }
+                
+                container.innerHTML = this.state.tasks.map(task => this.renderTask(task)).join('');
+            }
+            
+            renderTask(task) {
+                const dateTime = new Date(task.dateTime);
+                const dateStr = dateTime.toLocaleDateString();
+                const timeStr = dateTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                
+                const repeatInfo = this.getRepeatInfo(task);
+                const statusInfo = this.getStatusInfo(task);
+                const toggleButton = this.getToggleButton(task);
+                const timeButtons = this.generateTaskTimeButtons(task.id);
+                
+                return `
+                    <div class="task-item">
+                        <div class="task-info">
+                            <div class="task-name" onclick="taskEditor.editTaskName(${task.id})" title="Click to edit task name">${this.escapeHtml(task.name)}</div>
+                            <div class="task-datetime" onclick="taskEditor.editTaskDateTime(${task.id})" title="Click to edit date and time">${dateStr} at ${timeStr}</div>
+                            <div class="task-time-controls">
+                                <span style="font-size: 10px; color: #999;">Time:</span>
+                                ${timeButtons}
+                            </div>
+                            ${repeatInfo}
+                            ${statusInfo}
+                        </div>
+                        <div class="task-buttons">
+                            ${toggleButton}
+                            <button class="btn btn-success btn-small" onclick="taskManager.completeTask(${task.id})">Complete</button>
+                            <button class="btn btn-secondary btn-small" onclick="taskEditor.editTask(${task.id})">Edit</button>
+                            <button class="btn btn-danger btn-small" onclick="taskManager.removeTask(${task.id})">Remove</button>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            getRepeatInfo(task) {
+                if (!task.isRepeating) return '';
+                
+                if (task.repeatType === 'custom') {
+                    return `<div class="task-repeat-info">Repeats every ${task.interval} ${task.intervalUnit}</div>`;
+                }
+                
+                const repeatLabels = {
+                    daily: 'Daily',
+                    weekly: 'Weekly',
+                    biweekly: 'Bi-weekly',
+                    monthly: 'Monthly',
+                    quarterly: 'Quarterly',
+                    biannually: 'Semi-annually',
+                    annually: 'Annually'
+                };
+                
+                return `<div class="task-repeat-info">Repeats ${repeatLabels[task.repeatType] || task.repeatType}</div>`;
+            }
+            
+            getStatusInfo(task) {
+                return task.status === 'paused' ? `<div class="task-status paused">Paused</div>` : '';
+            }
+            
+            getToggleButton(task) {
+                return task.status === 'active' 
+                    ? `<button class="btn btn-warning btn-small" onclick="taskManager.toggleTask(${task.id})">Pause</button>`
+                    : `<button class="btn btn-success btn-small" onclick="taskManager.toggleTask(${task.id})">Resume</button>`;
+            }
+            
+            generateTaskTimeButtons(taskId) {
+                return this.state.adjustValues.map(value => {
+                    const className = value < 0 ? 'minus' : 'plus';
+                    const displayValue = Math.abs(value);
+                    const sign = value < 0 ? '-' : '+';
+                    return `<button class="time-adjust-btn ${className}" onclick="taskEditor.adjustTaskTime(${taskId}, ${value})">${sign}${displayValue}m</button>`;
+                }).join('');
+            }
+            
+            escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+        }
+
+        // ============================================================================
+        // TASK EDITOR SERVICE
+        // ============================================================================
+
+        /**
+         * Handles task editing operations including inline editing
+         */
+        class TaskEditor {
+            constructor(state, scheduler, storageService, uiRenderer) {
+                this.state = state;
+                this.scheduler = scheduler;
+                this.storage = storageService;
+                this.uiRenderer = uiRenderer;
+            }
+            
+            editTask(taskId) {
+                const task = this.state.findTask(taskId);
+                if (!task) return;
+                
+                this.state.editingTaskId = taskId;
+                
+                this.showEditingIndicator();
+                this.populateForm(task);
+                this.updateFormVisibility(task);
+                this.scrollToForm();
+            }
+            
+            showEditingIndicator() {
+                const editingContainer = document.getElementById('editingContainer');
+                editingContainer.innerHTML = `
+                    <div class="editing-form">
+                        <h3>Editing Task</h3>
+                        <button class="btn btn-secondary" onclick="taskEditor.cancelEdit()">Cancel Edit</button>
+                    </div>
+                `;
+            }
+            
+            populateForm(task) {
+                document.getElementById('taskName').value = task.name;
+                document.getElementById('taskDate').value = task.date;
+                document.getElementById('taskTime').value = task.time;
+                document.getElementById('isRepeating').checked = task.isRepeating;
+                document.getElementById('repeatType').value = task.repeatType || 'daily';
+                document.getElementById('reminderInterval').value = task.interval || 1;
+                document.getElementById('intervalUnit').value = task.intervalUnit || 'days';
+            }
+            
+            updateFormVisibility(task) {
+                document.getElementById('intervalGroup').style.display = task.isRepeating ? 'block' : 'none';
+                document.getElementById('customIntervalGroup').style.display = 
+                    (task.isRepeating && task.repeatType === 'custom') ? 'block' : 'none';
+                document.getElementById('submitBtn').textContent = 'Update Task';
+            }
+            
+            scrollToForm() {
+                document.querySelector('.add-task-form').scrollIntoView({ behavior: 'smooth' });
+            }
+            
+            cancelEdit() {
+                this.state.editingTaskId = null;
+                document.getElementById('editingContainer').innerHTML = '';
+                uiController.clearForm();
+            }
+            
+            editTaskName(taskId) {
+                const task = this.state.findTask(taskId);
+                if (!task) return;
+                
+                const targetElement = this.findTaskNameElement(taskId);
+                if (!targetElement) return;
+                
+                const input = this.createNameInput(task);
+                this.replaceElementContent(targetElement, input);
+                this.setupNameEditHandlers(input, task);
+            }
+            
+            findTaskNameElement(taskId) {
+                const taskNameElements = document.querySelectorAll('.task-name');
+                return Array.from(taskNameElements).find(element => 
+                    element.getAttribute('onclick') === `taskEditor.editTaskName(${taskId})`
+                );
+            }
+            
+            createNameInput(task) {
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.className = 'task-name-input';
+                input.value = task.name;
+                return input;
+            }
+            
+            replaceElementContent(element, input) {
+                element.className = 'task-name task-name-editing';
+                element.innerHTML = '';
+                element.appendChild(input);
+                input.focus();
+                input.select();
+            }
+            
+            setupNameEditHandlers(input, task) {
+                const saveEdit = () => {
+                    const newName = input.value.trim();
+                    if (newName && newName !== task.name) {
+                        task.name = newName;
+                        this.storage.saveTasks(this.state.tasks, this.state.taskIdCounter);
+                    }
+                    this.uiRenderer.renderTasks();
+                };
+                
+                const cancelEdit = () => this.uiRenderer.renderTasks();
+                
+                input.addEventListener('blur', saveEdit);
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') saveEdit();
+                    else if (e.key === 'Escape') cancelEdit();
+                });
+            }
+            
+            editTaskDateTime(taskId) {
+                const task = this.state.findTask(taskId);
+                if (!task) return;
+                
+                const targetElement = this.findTaskDateTimeElement(taskId);
+                if (!targetElement) return;
+                
+                const inputContainer = this.createDateTimeInputs(task);
+                this.replaceElementContent(targetElement, inputContainer);
+                this.setupDateTimeEditHandlers(inputContainer, task);
+            }
+            
+            findTaskDateTimeElement(taskId) {
+                const taskDateTimeElements = document.querySelectorAll('.task-datetime');
+                return Array.from(taskDateTimeElements).find(element => 
+                    element.getAttribute('onclick') === `taskEditor.editTaskDateTime(${taskId})`
+                );
+            }
+            
+            createDateTimeInputs(task) {
+                const taskDateTime = new Date(task.dateTime);
+                const currentDate = taskDateTime.toISOString().split('T')[0];
+                const currentTime = taskDateTime.toTimeString().slice(0, 5);
+                
+                const container = document.createElement('div');
+                container.className = 'datetime-inputs';
+                
+                const dateInput = this.createDateInput(currentDate);
+                const timeInput = this.createTimeInput(currentTime);
+                
+                container.append(dateInput, timeInput);
+                return container;
+            }
+            
+            createDateInput(value) {
+                const input = document.createElement('input');
+                input.type = 'date';
+                input.className = 'datetime-input date';
+                input.value = value;
+                return input;
+            }
+            
+            createTimeInput(value) {
+                const input = document.createElement('input');
+                input.type = 'time';
+                input.className = 'datetime-input time';
+                input.value = value;
+                return input;
+            }
+            
+            setupDateTimeEditHandlers(container, task) {
+                const [dateInput, timeInput] = container.children;
+                
+                const saveDateTime = () => {
+                    const newDate = dateInput.value;
+                    const newTime = timeInput.value;
+                    
+                    if (newDate && newTime) {
+                        const newDateTime = new Date(`${newDate}T${newTime}`);
+                        
+                        if (newDateTime.getTime() !== task.dateTime) {
+                            this.updateTaskDateTime(task, newDateTime, newDate, newTime);
+                        }
+                    }
+                    this.uiRenderer.renderTasks();
+                };
+                
+                const cancelDateTime = () => this.uiRenderer.renderTasks();
+                
+                [dateInput, timeInput].forEach(input => {
+                    input.addEventListener('blur', saveDateTime);
+                    input.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter') saveDateTime();
+                        else if (e.key === 'Escape') cancelDateTime();
+                        else if (e.key === 'Tab' && e.target === timeInput) {
+                            setTimeout(saveDateTime, 100);
+                        }
+                    });
+                });
+            }
+            
+            updateTaskDateTime(task, newDateTime, newDate, newTime) {
+                console.log(`📅 Updating task "${task.name}" datetime from ${new Date(task.dateTime).toLocaleString()} to ${newDateTime.toLocaleString()}`);
+                
+                this.scheduler.clearTaskTimers(task);
+                
+                task.dateTime = newDateTime.getTime();
+                task.date = newDate;
+                task.time = newTime;
+                task.timeAdjusted = false;
+                
+                if (task.status === 'active') {
+                    this.scheduler.scheduleTask(task);
+                }
+                
+                this.storage.saveTasks(this.state.tasks, this.state.taskIdCounter);
+            }
+            
+            adjustTaskTime(taskId, minutesToAdd) {
+                const task = this.state.findTask(taskId);
+                if (!task) return;
+                
+                this.scheduler.clearTaskTimers(task);
+                
+                const baseDateTime = task.timeAdjusted 
+                    ? new Date(task.dateTime)
+                    : new Date();
+                
+                if (!task.timeAdjusted) {
+                    task.timeAdjusted = true;
+                    console.log(`📅 First adjustment - using current time: ${baseDateTime.toLocaleTimeString()}`);
+                } else {
+                    console.log(`📅 Subsequent adjustment - using task time: ${baseDateTime.toLocaleTimeString()}`);
+                }
+                
+                const adjustedDateTime = new Date(baseDateTime.getTime() + (minutesToAdd * 60 * 1000));
+                
+                task.dateTime = adjustedDateTime.getTime();
+                task.date = adjustedDateTime.toISOString().split('T')[0];
+                task.time = adjustedDateTime.toTimeString().slice(0, 5);
+                
+                if (task.status === 'active') {
+                    this.scheduler.scheduleTask(task);
+                }
+                
+                this.storage.saveTasks(this.state.tasks, this.state.taskIdCounter);
+                this.uiRenderer.renderTasks();
+                
+                const timeStr = adjustedDateTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                const sign = minutesToAdd >= 0 ? '+' : '';
+                console.log(`⏰ Task "${task.name}" adjusted ${sign}${minutesToAdd}m → ${timeStr}`);
+            }
+        }
+
+        // ============================================================================
+        // SETTINGS MANAGEMENT SERVICE
+        // ============================================================================
+
+        /**
+         * Handles all application settings
+         */
+        class SettingsManager {
+            constructor(state, storageService, scheduler) {
+                this.state = state;
+                this.storage = storageService;
+                this.scheduler = scheduler;
+            }
+            
+            saveNagSettings() {
+                const nagValue = parseInt(document.getElementById('nagInterval').value);
+                const nagUnit = document.getElementById('nagUnit').value;
+                
+                if (!this.validateNagSettings(nagValue)) return;
+                
+                this.state.nagIntervalSeconds = nagUnit === 'minutes' ? nagValue * 60 : nagValue;
+                
+                if (!this.validateNagRange()) return;
+                
+                this.storage.saveSetting(this.storage.KEYS.NAG_INTERVAL, this.state.nagIntervalSeconds);
+                this.restartActiveTaskTimers();
+                
+                const displayText = nagUnit === 'minutes' 
+                    ? `${nagValue} minute${nagValue > 1 ? 's' : ''}` 
+                    : `${nagValue} second${nagValue > 1 ? 's' : ''}`;
+                alert(`💾 Nagging interval set to every ${displayText}!`);
+            }
+            
+            validateNagSettings(nagValue) {
+                if (!nagValue || nagValue < 1) {
+                    alert('⚠️ Nagging interval must be at least 1.');
+                    return false;
+                }
+                return true;
+            }
+            
+            validateNagRange() {
+                if (this.state.nagIntervalSeconds < 1) {
+                    alert('⚠️ Minimum nagging interval is 1 second.');
+                    return false;
+                }
+                if (this.state.nagIntervalSeconds > 3600) {
+                    alert('⚠️ Maximum nagging interval is 1 hour (3600 seconds).');
+                    return false;
+                }
+                return true;
+            }
+            
+            restartActiveTaskTimers() {
+                this.state.tasks.forEach(task => {
+                    if (task.status === 'active' && task.timerId) {
+                        clearInterval(task.timerId);
+                        const nagIntervalMs = this.state.nagIntervalSeconds * 1000;
+                        task.timerId = setInterval(() => {
+                            if (task.status === 'active') {
+                                console.log(`🔁 Continuous nag (${this.state.nagIntervalSeconds}s interval): ${task.name}`);
+                                notificationService.showReminder(task);
+                            }
+                        }, nagIntervalMs);
+                    }
+                });
+            }
+            
+            saveSnoozeSettings() {
+                const snoozeValue = parseInt(document.getElementById('snoozeDuration').value);
+                
+                if (!snoozeValue || snoozeValue < 1) {
+                    alert('⚠️ Snooze duration must be at least 1 minute.');
+                    return;
+                }
+                
+                if (snoozeValue > 60) {
+                    alert('⚠️ Maximum snooze duration is 60 minutes.');
+                    return;
+                }
+                
+                this.state.snoozeMinutes = snoozeValue;
+                this.storage.saveSetting(this.storage.KEYS.SNOOZE, this.state.snoozeMinutes);
+                
+                alert(`💤 Snooze duration set to ${this.state.snoozeMinutes} minute${this.state.snoozeMinutes > 1 ? 's' : ''}!`);
+            }
+            
+            saveAdjustSettings() {
+                const values = [];
+                for (let i = 1; i <= 8; i++) {
+                    values.push(parseInt(document.getElementById(`adjust${i}`).value) || 0);
+                }
+                
+                if (!this.validateAdjustValues(values)) return;
+                
+                this.state.adjustValues = values;
+                this.storage.saveSetting(this.storage.KEYS.ADJUST_VALUES, this.state.adjustValues);
+                uiRenderer.renderTasks();
+                alert('💾 Quick adjust values saved!');
+            }
+            
+            validateAdjustValues(values) {
+                for (const value of values) {
+                    if (value < -999 || value > 999 || value === 0) {
+                        alert('⚠️ All values must be between -999 and 999 minutes (excluding 0).');
+                        return false;
+                    }
+                }
+                return true;
+            }
+            
+            resetAdjustSettings() {
+                const defaultValues = [-30, -15, -5, -1, 1, 5, 15, 30];
+                this.state.adjustValues = [...defaultValues];
+                
+                defaultValues.forEach((value, index) => {
+                    document.getElementById(`adjust${index + 1}`).value = value;
+                });
+                
+                this.storage.saveSetting(this.storage.KEYS.ADJUST_VALUES, this.state.adjustValues);
+                uiRenderer.renderTasks();
+                alert('🔄 Quick adjust values reset to defaults!');
+            }
+            
+            async toggleDesktopNotifications() {
+                if (!('Notification' in window)) {
+                    alert('❌ Desktop notifications are not supported in this browser.');
+                    return;
+                }
+                
+                if (Notification.permission === 'default') {
+                    const permission = await Notification.requestPermission();
+                    if (permission !== 'granted') {
+                        alert('❌ Desktop notifications permission denied.');
+                        return;
+                    }
+                }
+                
+                if (Notification.permission !== 'granted') {
+                    alert('❌ Desktop notifications are blocked. Please enable them in your browser settings.');
+                    return;
+                }
+                
+                this.state.desktopNotificationsEnabled = !this.state.desktopNotificationsEnabled;
+                this.updateNotificationToggle();
+                this.storage.saveSetting(this.storage.KEYS.NOTIFICATIONS, this.state.desktopNotificationsEnabled);
+                
+                const status = this.state.desktopNotificationsEnabled ? 'enabled' : 'disabled';
+                const icon = this.state.desktopNotificationsEnabled ? '✅' : '🔕';
+                alert(`${icon} Desktop notifications ${status}!`);
+            }
+            
+            updateNotificationToggle() {
+                const button = document.getElementById('notificationToggle');
+                if (this.state.desktopNotificationsEnabled && Notification.permission === 'granted') {
+                    button.textContent = 'Notifications: ON';
+                    button.style.background = '#28a745';
+                    button.style.color = 'white';
+                } else {
+                    button.textContent = 'Notifications: OFF';
+                    button.style.background = '#6c757d';
+                    button.style.color = 'white';
+                }
+            }
+        }
+
+        // ============================================================================
+        // UI CONTROLLER SERVICE
+        // ============================================================================
+
+        /**
+         * Handles UI interactions and form management
+         */
+        class UIController {
+            constructor(state) {
+                this.state = state;
+            }
+            
+            toggleAddTask() {
+                const form = document.getElementById('addTaskForm');
+                const button = document.getElementById('addTaskBtn');
+                
+                if (form.classList.contains('show')) {
+                    form.classList.remove('show');
+                    button.textContent = '+ Add';
+                } else {
+                    form.classList.add('show');
+                    button.textContent = '- Hide';
+                    this.setDefaultDateTime();
+                }
+            }
+            
+            toggleSettingsDropdown() {
+                const dropdown = document.getElementById('settingsDropdown');
+                dropdown.classList.toggle('show');
+                
+                if (dropdown.classList.contains('show')) {
+                    this.setupDropdownCloseHandler(dropdown);
+                }
+            }
+            
+            setupDropdownCloseHandler(dropdown) {
+                const closeDropdown = (e) => {
+                    if (!e.target.closest('.settings-dropdown')) {
+                        dropdown.classList.remove('show');
+                        document.removeEventListener('click', closeDropdown);
+                    }
+                };
+                
+                setTimeout(() => {
+                    document.addEventListener('click', closeDropdown);
+                }, 0);
+            }
+            
+            setDefaultDateTime() {
+                const now = new Date();
+                const today = now.toISOString().split('T')[0];
+                const currentTime = now.toTimeString().slice(0, 5);
+                
+                document.getElementById('taskDate').value = today;
+                document.getElementById('taskTime').value = currentTime;
+            }
+            
+            clearForm() {
+                document.getElementById('taskName').value = '';
+                document.getElementById('isRepeating').checked = false;
+                document.getElementById('intervalGroup').style.display = 'none';
+                document.getElementById('customIntervalGroup').style.display = 'none';
+                document.getElementById('submitBtn').textContent = 'Add Task';
+                this.setDefaultDateTime();
+            }
+        }
+
+        // ============================================================================
+        // DEBUG SERVICE
+        // ============================================================================
+
+        /**
+         * Debug utilities for troubleshooting
+         */
+        class DebugService {
+            constructor(state, scheduler) {
+                this.state = state;
+                this.scheduler = scheduler;
+            }
+            
+            debugTimers() {
+                const now = new Date();
+                let debugInfo = `🐛 TIMER DEBUG REPORT\n`;
+                debugInfo += `Current time: ${now.toLocaleString()}\n`;
+                debugInfo += `Nagging interval: ${this.state.nagIntervalSeconds} seconds\n`;
+                debugInfo += `Snooze duration: ${this.state.snoozeMinutes} minutes\n`;
+                debugInfo += `Desktop notifications: ${this.state.desktopNotificationsEnabled ? 'ON' : 'OFF'}\n\n`;
+                
+                if (this.state.tasks.length === 0) {
+                    debugInfo += '❌ NO TASKS FOUND\n';
+                } else {
+                    debugInfo += `📋 FOUND ${this.state.tasks.length} TASKS:\n\n`;
+                    debugInfo += this.generateTaskDebugInfo(now);
+                }
+                
+                this.logDetailedDebugInfo();
+                this.showDebugPopup(debugInfo);
+            }
+            
+            generateTaskDebugInfo(now) {
+                return this.state.tasks.map((task, index) => {
+                    const taskTime = new Date(task.dateTime);
+                    const delay = taskTime.getTime() - now.getTime();
+                    const delayMinutes = Math.round(delay / (1000 * 60));
+                    
+                    let info = `${index + 1}. "${task.name}"\n`;
+                    info += `   Status: ${task.status}\n`;
+                    info += `   Scheduled: ${taskTime.toLocaleString()}\n`;
+                    info += `   Time diff: ${delayMinutes} minutes\n`;
+                    info += `   Initial timer: ${task.initialTimerId ? 'SET' : 'NOT SET'}\n`;
+                    info += `   Nag timer: ${task.timerId ? 'RUNNING' : 'NOT RUNNING'}\n`;
+                    info += `   Repeating: ${task.isRepeating ? 'YES' : 'NO'}\n`;
+                    
+                    if (delay <= 0 && task.status === 'active' && !task.timerId) {
+                        info += `   ⚠️ PROBLEM: Should be nagging but no timer!\n`;
+                    } else if (delay <= 0 && task.status === 'active' && task.timerId) {
+                        const minutesOverdue = Math.abs(delayMinutes);
+                        info += `   ✅ ACTIVE: Nagging (${minutesOverdue}min overdue)\n`;
+                    } else if (delay > 0 && task.status === 'active') {
+                        info += `   ⏳ Waiting: Will start in ${delayMinutes} minutes\n`;
+                    } else if (task.status === 'paused') {
+                        info += `   ⏸️ Paused: No nagging expected\n`;
+                    }
+                    
+                    return info + '\n';
+                }).join('');
+            }
+            
+            logDetailedDebugInfo() {
+                console.log('=== DETAILED DEBUG INFO ===');
+                console.log('Tasks array:', this.state.tasks);
+                console.log('Nag interval seconds:', this.state.nagIntervalSeconds);
+                console.log('Current time:', new Date());
+            }
+            
+            showDebugPopup(debugInfo) {
+                const popup = document.createElement('div');
+                popup.style.cssText = `
+                    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+                    background: white; border: 2px solid #333; border-radius: 8px;
+                    padding: 20px; max-width: 600px; max-height: 80vh; overflow-y: auto;
+                    font-family: monospace; font-size: 12px; white-space: pre-line;
+                    z-index: 10000; box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+                `;
+                popup.innerHTML = `
+                    <div style="margin-bottom: 15px;"><strong>🐛 Timer Status Debug</strong></div>
+                    <div style="background: #f5f5f5; padding: 10px; border-radius: 4px;">${debugInfo}</div>
+                    <button onclick="this.parentElement.remove()" style="margin-top: 15px; padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">Close</button>
+                `;
+                
+                document.body.appendChild(popup);
+            }
+            
+            fixStuckTimers() {
+                const now = new Date();
+                let fixedCount = 0;
+                
+                console.log('🔧 Checking for stuck timers...');
+                
+                this.state.tasks.forEach(task => {
+                    if (task.status === 'active') {
+                        const taskTime = new Date(task.dateTime);
+                        const delay = taskTime.getTime() - now.getTime();
+                        
+                        if (delay <= 0 && !task.timerId) {
+                            console.log(`🔧 Fixing stuck timer for: ${task.name}`);
+                            this.fixOverdueTask(task);
+                            fixedCount++;
+                        } else if (delay > 0 && !task.initialTimerId && !task.timerId) {
+                            console.log(`🔧 Rescheduling future task: ${task.name}`);
+                            this.scheduler.scheduleTask(task);
+                            fixedCount++;
+                        }
+                    }
+                });
+                
+                const message = fixedCount > 0 
+                    ? `🔧 Fixed ${fixedCount} stuck timer${fixedCount > 1 ? 's' : ''}!`
+                    : '✅ All timers are working correctly!';
+                alert(message);
+            }
+            
+            fixOverdueTask(task) {
+                this.scheduler.clearTaskTimers(task);
+                notificationService.showReminder(task);
+                
+                const nagIntervalMs = this.state.nagIntervalSeconds * 1000;
+                task.timerId = setInterval(() => {
+                    if (task.status === 'active') {
+                        console.log(`🔁 Fixed timer nag: ${task.name}`);
+                        notificationService.showReminder(task);
+                    }
+                }, nagIntervalMs);
+            }
+        }
+
+        // ============================================================================
+        // APPLICATION ORCHESTRATOR
+        // ============================================================================
+
+        /**
+         * Main application class that coordinates all services
+         */
+        class TaskReminderApp {
+            constructor() {
+                this.state = new AppState();
+                this.storageService = new StorageService();
+                this.notificationService = new NotificationService(this.state);
+                this.scheduler = new TaskScheduler(this.state, this.notificationService);
+                this.taskManager = new TaskManager(this.state, this.scheduler, this.storageService, this.notificationService);
+                this.uiRenderer = new UIRenderer(this.state);
+                this.taskEditor = new TaskEditor(this.state, this.scheduler, this.storageService, this.uiRenderer);
+                this.settingsManager = new SettingsManager(this.state, this.storageService, this.scheduler);
+                this.uiController = new UIController(this.state);
+                this.debugService = new DebugService(this.state, this.scheduler);
+                
+                this.initialize();
+            }
+            
+            async initialize() {
+                try {
+                    this.loadAllSettings();
+                    this.loadTasks();
+                    this.setupEventListeners();
+                    this.checkNotificationStatus();
+                    
+                    console.log('✅ Task Reminder System initialized successfully');
+                } catch (error) {
+                    console.error('❌ Failed to initialize Task Reminder System:', error);
+                }
+            }
+            
+            loadAllSettings() {
+                const settings = [
+                    ['adjustValues', 'ADJUST_VALUES', [-30, -15, -5, -1, 1, 5, 15, 30]],
+                    ['nagIntervalSeconds', 'NAG_INTERVAL', 60],
+                    ['snoozeMinutes', 'SNOOZE', 5],
+                    ['desktopNotificationsEnabled', 'NOTIFICATIONS', false]
+                ];
+                
+                settings.forEach(([stateKey, storageKey, defaultValue]) => {
+                    this.state[stateKey] = this.storageService.loadSetting(
+                        this.storageService.KEYS[storageKey], 
+                        defaultValue
+                    );
+                });
+                
+                this.updateUIFromSettings();
+            }
+            
+            updateUIFromSettings() {
+                // Update adjust values inputs
+                this.state.adjustValues.forEach((value, index) => {
+                    const input = document.getElementById(`adjust${index + 1}`);
+                    if (input) input.value = value;
+                });
+                
+                // Update nag interval
+                const nagInterval = document.getElementById('nagInterval');
+                const nagUnit = document.getElementById('nagUnit');
+                if (this.state.nagIntervalSeconds >= 60 && this.state.nagIntervalSeconds % 60 === 0) {
+                    nagInterval.value = this.state.nagIntervalSeconds / 60;
+                    nagUnit.value = 'minutes';
+                } else {
+                    nagInterval.value = this.state.nagIntervalSeconds;
+                    nagUnit.value = 'seconds';
+                }
+                
+                // Update snooze duration
+                document.getElementById('snoozeDuration').value = this.state.snoozeMinutes;
+                
+                // Update notification toggle
+                this.settingsManager.updateNotificationToggle();
+            }
+            
+            loadTasks() {
+                const { tasks, counter } = this.storageService.loadTasks();
+                
+                if (tasks.length > 0) {
+                    this.state.taskIdCounter = counter;
+                    this.state.tasks = this.enhanceLoadedTasks(tasks);
+                    this.cleanupOldTasks();
+                    this.rescheduleAllTasks();
+                }
+                
+                this.uiRenderer.renderTasks();
+            }
+            
+            enhanceLoadedTasks(tasks) {
+                return tasks.map(task => ({
+                    ...task,
+                    status: task.status || 'active',
+                    repeatType: task.repeatType || 'daily',
+                    timeAdjusted: task.timeAdjusted || false,
+                    timerId: null,
+                    initialTimerId: null
+                }));
+            }
+            
+            cleanupOldTasks() {
+                const now = new Date().getTime();
+                const oneDayAgo = now - (24 * 60 * 60 * 1000);
+                
+                this.state.tasks = this.state.tasks.filter(task => {
+                    if (!task.isRepeating && task.dateTime < oneDayAgo) {
+                        console.log(`🗑️ Removing old expired task: ${task.name}`);
+                        return false;
+                    }
+                    return true;
+                });
+            }
+            
+            rescheduleAllTasks() {
+                this.state.tasks.forEach(task => {
+                    this.scheduler.scheduleTask(task);
+                });
+            }
+            
+            setupEventListeners() {
+                this.uiController.setDefaultDateTime();
+                
+                // Form submission handlers
+                const formElements = [
+                    ['taskName', 'keypress'],
+                    ['reminderInterval', 'keypress']
+                ];
+                
+                formElements.forEach(([id, event]) => {
+                    document.getElementById(id).addEventListener(event, (e) => {
+                        if (e.key === 'Enter') this.taskManager.addTask();
+                    });
+                });
+                
+                // Repeat interval visibility toggle
+                document.getElementById('isRepeating').addEventListener('change', function() {
+                    const intervalGroup = document.getElementById('intervalGroup');
+                    intervalGroup.style.display = this.checked ? 'block' : 'none';
+                    
+                    if (!this.checked) {
+                        document.getElementById('customIntervalGroup').style.display = 'none';
+                    }
+                });
+                
+                // Custom interval visibility toggle
+                document.getElementById('repeatType').addEventListener('change', function() {
+                    const customIntervalGroup = document.getElementById('customIntervalGroup');
+                    customIntervalGroup.style.display = this.value === 'custom' ? 'block' : 'none';
+                });
+                
+                // Cleanup on page unload
+                window.addEventListener('beforeunload', () => {
+                    this.state.tasks.forEach(task => {
+                        if (task.timerId) clearInterval(task.timerId);
+                        if (task.initialTimerId) clearTimeout(task.initialTimerId);
+                    });
+                });
+            }
+            
+            checkNotificationStatus() {
+                if (!('Notification' in window)) {
+                    console.log('❌ Desktop notifications not supported in this browser');
+                    return;
+                }
+                
+                const messages = {
+                    default: '💡 Desktop notifications available - click "Enable Desktop Notifications" to enable',
+                    granted: '✅ Desktop notifications are enabled',
+                    denied: '❌ Desktop notifications are blocked'
+                };
+                
+                console.log(messages[Notification.permission]);
+            }
+        }
+
+        // ============================================================================
+        // GLOBAL INSTANCES & INITIALIZATION
+        // ============================================================================
+
+        // Global instances for backward compatibility with HTML onclick handlers
+        let app, taskManager, notificationService, uiRenderer, taskEditor, settingsManager, uiController, debugService;
+        
+        // Initialize the application when page loads
+        window.addEventListener('load', () => {
+            app = new TaskReminderApp();
+            
+            // Expose services globally for HTML event handlers
+            taskManager = app.taskManager;
+            notificationService = app.notificationService;
+            uiRenderer = app.uiRenderer;
+            taskEditor = app.taskEditor;
+            settingsManager = app.settingsManager;
+            uiController = app.uiController;
+            debugService = app.debugService;
+        });
+    </script>
+</body>
+</html>
