@@ -1577,16 +1577,29 @@
                 
                 const cancelDateTime = () => this.uiRenderer.renderTasks();
                 
+                // Add a slight delay to ensure the values are properly captured before blur
+                const delayedSave = () => {
+                    setTimeout(saveDateTime, 50);
+                };
+                
                 [dateInput, timeInput].forEach(input => {
-                    input.addEventListener('blur', saveDateTime);
+                    input.addEventListener('blur', delayedSave);
+                    input.addEventListener('change', saveDateTime);
                     input.addEventListener('keydown', (e) => {
-                        if (e.key === 'Enter') saveDateTime();
-                        else if (e.key === 'Escape') cancelDateTime();
-                        else if (e.key === 'Tab' && e.target === timeInput) {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            saveDateTime();
+                        } else if (e.key === 'Escape') {
+                            e.preventDefault();
+                            cancelDateTime();
+                        } else if (e.key === 'Tab' && e.target === timeInput) {
                             setTimeout(saveDateTime, 100);
                         }
                     });
                 });
+                
+                // Focus the date input
+                dateInput.focus();
             }
             
             updateTaskDateTime(task, newDateTime, newDate, newTime) {
