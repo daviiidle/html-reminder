@@ -718,32 +718,49 @@
             }
             
             saveTasks(tasks, counter) {
-                const tasksToSave = tasks.map(task => ({
-                    id: task.id,
-                    name: task.name,
-                    date: task.date,
-                    time: task.time,
-                    dateTime: task.dateTime,
-                    isRepeating: task.isRepeating,
-                    repeatType: task.repeatType,
-                    interval: task.interval,
-                    intervalUnit: task.intervalUnit,
-                    status: task.status,
-                    timeAdjusted: task.timeAdjusted
-                }));
-                
-                localStorage.setItem(this.KEYS.TASKS, JSON.stringify(tasksToSave));
-                localStorage.setItem(this.KEYS.COUNTER, counter.toString());
+                try {
+                    const tasksToSave = tasks.map(task => ({
+                        id: task.id,
+                        name: task.name,
+                        date: task.date,
+                        time: task.time,
+                        dateTime: task.dateTime,
+                        isRepeating: task.isRepeating,
+                        repeatType: task.repeatType,
+                        interval: task.interval,
+                        intervalUnit: task.intervalUnit,
+                        status: task.status,
+                        timeAdjusted: task.timeAdjusted
+                        // Note: NOT saving timerId or initialTimerId as they're not serializable
+                    }));
+                    
+                    console.log('💾 Saving tasks:', tasksToSave.length);
+                    localStorage.setItem(this.KEYS.TASKS, JSON.stringify(tasksToSave));
+                    localStorage.setItem(this.KEYS.COUNTER, counter.toString());
+                } catch (error) {
+                    console.error('❌ Error saving tasks:', error);
+                }
             }
             
             loadTasks() {
-                const savedTasks = localStorage.getItem(this.KEYS.TASKS);
-                const savedCounter = localStorage.getItem(this.KEYS.COUNTER);
-                
-                return {
-                    tasks: savedTasks ? JSON.parse(savedTasks) : [],
-                    counter: savedCounter ? parseInt(savedCounter) : 1
-                };
+                try {
+                    const savedTasks = localStorage.getItem(this.KEYS.TASKS);
+                    const savedCounter = localStorage.getItem(this.KEYS.COUNTER);
+                    
+                    const tasks = savedTasks ? JSON.parse(savedTasks) : [];
+                    console.log('📂 Loaded tasks from storage:', tasks.length);
+                    
+                    return {
+                        tasks,
+                        counter: savedCounter ? parseInt(savedCounter) : 1
+                    };
+                } catch (error) {
+                    console.error('❌ Error loading tasks:', error);
+                    return {
+                        tasks: [],
+                        counter: 1
+                    };
+                }
             }
             
             saveSetting(key, value) {
@@ -834,15 +851,28 @@
             }
             
             async showDesktopNotification(task) {
-                if (!this.state.desktopNotificationsEnabled || !this.hasPermission()) {
+                console.log('🔔 Desktop notification requested for:', task.name);
+                console.log('- Notifications enabled:', this.state.desktopNotificationsEnabled);
+                console.log('- Has permission:', this.hasPermission());
+                console.log('- Notification permission:', Notification.permission);
+                
+                if (!this.state.desktopNotificationsEnabled) {
+                    console.log('❌ Desktop notifications are disabled in settings');
+                    return;
+                }
+                
+                if (!this.hasPermission()) {
+                    console.log('❌ No permission for desktop notifications');
                     return;
                 }
                 
                 try {
+                    console.log('✅ Creating desktop notification...');
                     const notification = this.createNotification(task);
                     this.autoCloseNotification(notification);
+                    console.log('🎉 Desktop notification created successfully');
                 } catch (error) {
-                    console.warn('Could not show desktop notification:', error);
+                    console.error('❌ Could not show desktop notification:', error);
                 }
             }
             
@@ -963,14 +993,19 @@
                 await this.audioService.playNotificationSound();
             }
             
-            triggerTestReminder() {
+            async triggerTestReminder() {
                 const testTask = {
                     id: 999999,
-                    name: 'Test Reminder Task',
+                    name: '🧪 Test Reminder - This is a sample notification to test the popup and sound system!',
                     dateTime: new Date().getTime()
                 };
                 
-                this.showNagPopup(testTask);
+                console.log('🔔 Triggering test reminder...');
+                console.log('Desktop notifications enabled:', this.state.desktopNotificationsEnabled);
+                console.log('Notification permission:', Notification.permission);
+                
+                // Use the full showReminder method which includes desktop notifications
+                await this.showReminder(testTask);
             }
         }
 
@@ -988,7 +1023,13 @@
             }
             
             scheduleTask(task) {
+                if (task.status !== 'active') {
+                    console.log(`⏸️ Task "${task.name}" is paused, not scheduling`);
+                    return;
+                }
+                
                 console.log(`📅 Scheduling task: ${task.name}`);
+                console.log(`Task status: ${task.status}`);
                 
                 this.clearTaskTimers(task);
                 
@@ -998,6 +1039,7 @@
                 
                 console.log(`⏰ Task "${task.name}" scheduled for ${taskTime.toLocaleString()}`);
                 console.log(`⏱️ Delay: ${Math.round(delay / (1000 * 60))} minutes`);
+                console.log(`🔢 Nag interval: ${this.state.nagIntervalSeconds} seconds`);
                 
                 if (delay <= 0) {
                     this.startImmediateNagging(task);
@@ -1036,12 +1078,21 @@
             
             startContinuousNagging(task) {
                 const nagIntervalMs = this.state.nagIntervalSeconds * 1000;
+                console.log(`🔄 Starting continuous nagging every ${nagIntervalMs}ms (${this.state.nagIntervalSeconds}s) for: ${task.name}`);
+                
                 task.timerId = setInterval(() => {
+                    console.log(`🔁 Timer fired for task: ${task.name}, status: ${task.status}`);
                     if (task.status === 'active') {
                         console.log(`🔁 Continuous nag (${this.state.nagIntervalSeconds}s interval): ${task.name}`);
                         this.notificationService.showReminder(task);
+                    } else {
+                        console.log(`⏸️ Task ${task.name} is no longer active, stopping nagging`);
+                        clearInterval(task.timerId);
+                        task.timerId = null;
                     }
                 }, nagIntervalMs);
+                
+                console.log(`✅ Continuous nagging timer set for task: ${task.name}, timer ID: ${task.timerId}`);
             }
         }
 
@@ -2135,6 +2186,7 @@
                     nagInterval.value = this.state.nagIntervalSeconds;
                     nagUnit.value = 'seconds';
                 }
+                console.log(`⚙️ Nag interval set to: ${this.state.nagIntervalSeconds} seconds`);
                 
                 // Update snooze duration
                 document.getElementById('snoozeDuration').value = this.state.snoozeMinutes;
@@ -2181,7 +2233,9 @@
             }
             
             rescheduleAllTasks() {
-                this.state.tasks.forEach(task => {
+                console.log(`🔄 Rescheduling ${this.state.tasks.length} tasks`);
+                this.state.tasks.forEach((task, index) => {
+                    console.log(`📋 Task ${index + 1}: ${task.name}, status: ${task.status}, dateTime: ${new Date(task.dateTime).toLocaleString()}`);
                     this.scheduler.scheduleTask(task);
                 });
             }

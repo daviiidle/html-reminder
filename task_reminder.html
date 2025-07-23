@@ -766,9 +766,30 @@
         }
 
         function showDesktopNotification(task) {
-            if ('Notification' in window && Notification.permission === 'granted' && desktopNotificationsEnabled) {
+            console.log('🔔 Desktop notification requested for:', task.name);
+            console.log('- Notifications enabled:', desktopNotificationsEnabled);
+            console.log('- Has window.Notification:', 'Notification' in window);
+            console.log('- Notification permission:', Notification.permission);
+            
+            if (!desktopNotificationsEnabled) {
+                console.log('❌ Desktop notifications are disabled in settings');
+                return null;
+            }
+            
+            if (!('Notification' in window)) {
+                console.log('❌ Browser does not support notifications');
+                return null;
+            }
+            
+            if (Notification.permission !== 'granted') {
+                console.log('❌ No permission for desktop notifications');
+                return null;
+            }
+            
+            try {
+                console.log('✅ Creating desktop notification...');
                 const notification = new Notification('⏰ Task Reminder', {
-                    body: task.name,
+                    body: `Don't forget: ${task.name}`,
                     icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="50" font-size="50" text-anchor="middle" x="50">⏰</text></svg>',
                     badge: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="50" font-size="50" text-anchor="middle" x="50">📋</text></svg>',
                     tag: `task-${task.id}`,
@@ -787,10 +808,12 @@
                     notification.close();
                 };
 
-                console.log('🔔 Desktop notification sent:', task.name);
+                console.log('🎉 Desktop notification created successfully:', task.name);
                 return notification;
+            } catch (error) {
+                console.error('❌ Error creating desktop notification:', error);
+                return null;
             }
-            return null;
         }
 
         function playNotificationSound() {
@@ -864,13 +887,24 @@
                 isRepeating: false
             };
             
-            // Initialize audio context first, then show popup
+            console.log('🔔 Triggering test reminder...');
+            console.log('Desktop notifications enabled:', desktopNotificationsEnabled);
+            console.log('Notification permission:', Notification.permission);
+            
+            // Initialize audio context first, then show full reminder (including desktop notification)
             initAudioContext().then(() => {
-                console.log('🔔 Triggering test reminder...');
+                // Play sound
+                playNotificationSound();
+                
+                // Show desktop notification
+                showDesktopNotification(testTask);
+                
+                // Show popup
                 showNagPopup(testTask);
             }).catch(error => {
                 console.error('Error initializing audio:', error);
-                // Show popup anyway, even if audio fails
+                // Show notifications anyway, even if audio fails
+                showDesktopNotification(testTask);
                 showNagPopup(testTask);
             });
         }
@@ -1037,23 +1071,28 @@
 
         // Save tasks to localStorage
         function saveTasks() {
-            const tasksToSave = tasks.map(task => ({
-                id: task.id,
-                name: task.name,
-                date: task.date,
-                time: task.time,
-                dateTime: task.dateTime,
-                isRepeating: task.isRepeating,
-                repeatType: task.repeatType,
-                interval: task.interval,
-                intervalUnit: task.intervalUnit,
-                status: task.status,
-                timeAdjusted: task.timeAdjusted
-                // Don't save timer IDs as they can't be serialized
-            }));
-            
-            localStorage.setItem('taskReminders', JSON.stringify(tasksToSave));
-            localStorage.setItem('taskReminderCounter', taskIdCounter.toString());
+            try {
+                const tasksToSave = tasks.map(task => ({
+                    id: task.id,
+                    name: task.name,
+                    date: task.date,
+                    time: task.time,
+                    dateTime: task.dateTime,
+                    isRepeating: task.isRepeating,
+                    repeatType: task.repeatType,
+                    interval: task.interval,
+                    intervalUnit: task.intervalUnit,
+                    status: task.status,
+                    timeAdjusted: task.timeAdjusted
+                    // Don't save timer IDs as they can't be serialized
+                }));
+                
+                console.log('💾 Saving tasks:', tasksToSave.length);
+                localStorage.setItem('taskReminders', JSON.stringify(tasksToSave));
+                localStorage.setItem('taskReminderCounter', taskIdCounter.toString());
+            } catch (error) {
+                console.error('❌ Error saving tasks:', error);
+            }
         }
 
         function addTask() {
@@ -1183,14 +1222,21 @@
         }
 
         function scheduleTask(task) {
+            if (task.status !== 'active') {
+                console.log(`⏸️ Task "${task.name}" is paused, not scheduling`);
+                return;
+            }
+            
             const now = new Date();
             const taskDateTime = new Date(task.dateTime);
             const delay = taskDateTime.getTime() - now.getTime();
 
             console.log(`📅 Scheduling task "${task.name}"`);
+            console.log(`Task status: ${task.status}`);
             console.log(`⏰ Current time: ${now.toLocaleString()}`);
             console.log(`🎯 Target time: ${taskDateTime.toLocaleString()}`);
             console.log(`⏳ Delay: ${Math.round(delay / 1000)} seconds`);
+            console.log(`🔢 Nag interval: ${nagIntervalSeconds} seconds`);
 
             if (delay > 0 && task.status === 'active') {
                 // Clear any existing timers first
@@ -1206,13 +1252,19 @@
                         
                         // START CONTINUOUS NAGGING - using custom interval
                         const nagIntervalMs = nagIntervalSeconds * 1000;
-                        console.log(`🔄 Starting continuous nagging every ${nagIntervalSeconds} seconds`);
+                        console.log(`🔄 Starting continuous nagging every ${nagIntervalMs}ms (${nagIntervalSeconds}s) for: ${task.name}`);
                         task.timerId = setInterval(() => {
+                            console.log(`🔁 Timer fired for task: ${task.name}, status: ${task.status}`);
                             if (task.status === 'active') {
                                 console.log(`🔁 Continuous nag for: ${task.name}`);
                                 showNagPopup(task);
+                            } else {
+                                console.log(`⏸️ Task ${task.name} is no longer active, stopping nagging`);
+                                clearInterval(task.timerId);
+                                task.timerId = null;
                             }
                         }, nagIntervalMs);
+                        console.log(`✅ Continuous nagging timer set for task: ${task.name}, timer ID: ${task.timerId}`);
                     }
                 }, delay);
             } else if (delay <= 0) {
