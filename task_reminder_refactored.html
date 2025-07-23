@@ -181,6 +181,21 @@
             font-size: 12px;
         }
 
+        .datetime-save-btn {
+            padding: 4px 8px;
+            font-size: 11px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .datetime-save-btn:hover {
+            opacity: 0.8;
+        }
+
         .datetime-input.date {
             width: 130px;
         }
@@ -762,6 +777,12 @@
                 if (!this.state.soundEnabled) return;
                 
                 try {
+                    // Only try to play sound if we have user interaction
+                    if (this.state.audioContext && this.state.audioContext.state === 'suspended') {
+                        console.log('AudioContext suspended, user interaction required');
+                        return;
+                    }
+                    
                     await this.initializeAudioContext();
                     this.playBeepSequence();
                 } catch (error) {
@@ -1489,6 +1510,17 @@
                 input.select();
             }
             
+            replaceElementContentForDateTime(element, container) {
+                element.className = 'task-datetime datetime-editing';
+                element.innerHTML = '';
+                element.appendChild(container);
+                // Focus the first input (date input)
+                const firstInput = container.querySelector('input');
+                if (firstInput) {
+                    firstInput.focus();
+                }
+            }
+            
             setupNameEditHandlers(input, task) {
                 const saveEdit = () => {
                     const newName = input.value.trim();
@@ -1516,7 +1548,7 @@
                 if (!targetElement) return;
                 
                 const inputContainer = this.createDateTimeInputs(task);
-                this.replaceElementContent(targetElement, inputContainer);
+                this.replaceElementContentForDateTime(targetElement, inputContainer);
                 this.setupDateTimeEditHandlers(inputContainer, task);
             }
             
@@ -1537,8 +1569,9 @@
                 
                 const dateInput = this.createDateInput(currentDate);
                 const timeInput = this.createTimeInput(currentTime);
+                const saveButton = this.createSaveButton();
                 
-                container.append(dateInput, timeInput);
+                container.append(dateInput, timeInput, saveButton);
                 return container;
             }
             
@@ -1558,33 +1591,52 @@
                 return input;
             }
             
+            createSaveButton() {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'datetime-save-btn';
+                button.textContent = 'Save';
+                return button;
+            }
+            
             setupDateTimeEditHandlers(container, task) {
-                const [dateInput, timeInput] = container.children;
+                const [dateInput, timeInput, saveButton] = container.children;
                 
                 const saveDateTime = () => {
+                    console.log('Save button clicked!');
                     const newDate = dateInput.value;
                     const newTime = timeInput.value;
                     
+                    console.log('Current values:', { newDate, newTime, currentDateTime: task.dateTime });
+                    
                     if (newDate && newTime) {
                         const newDateTime = new Date(`${newDate}T${newTime}`);
+                        console.log('New datetime:', newDateTime.getTime(), 'vs current:', task.dateTime);
                         
                         if (newDateTime.getTime() !== task.dateTime) {
+                            console.log('Updating task datetime...');
                             this.updateTaskDateTime(task, newDateTime, newDate, newTime);
+                        } else {
+                            console.log('No change in datetime, just re-rendering');
                         }
+                    } else {
+                        console.log('Missing date or time values');
                     }
                     this.uiRenderer.renderTasks();
                 };
                 
                 const cancelDateTime = () => this.uiRenderer.renderTasks();
                 
-                // Add a slight delay to ensure the values are properly captured before blur
-                const delayedSave = () => {
-                    setTimeout(saveDateTime, 50);
-                };
+                // Save button click handler
+                saveButton.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Save button event triggered');
+                    saveDateTime();
+                });
                 
+                // Keep keyboard shortcuts
                 [dateInput, timeInput].forEach(input => {
-                    input.addEventListener('blur', delayedSave);
-                    input.addEventListener('change', saveDateTime);
                     input.addEventListener('keydown', (e) => {
                         if (e.key === 'Enter') {
                             e.preventDefault();
@@ -1592,14 +1644,9 @@
                         } else if (e.key === 'Escape') {
                             e.preventDefault();
                             cancelDateTime();
-                        } else if (e.key === 'Tab' && e.target === timeInput) {
-                            setTimeout(saveDateTime, 100);
                         }
                     });
                 });
-                
-                // Focus the date input
-                dateInput.focus();
             }
             
             updateTaskDateTime(task, newDateTime, newDate, newTime) {

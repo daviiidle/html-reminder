@@ -252,6 +252,21 @@
             width: 80px;
         }
 
+        .datetime-save-btn {
+            padding: 4px 8px;
+            font-size: 11px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .datetime-save-btn:hover {
+            opacity: 0.8;
+        }
+
         .task-repeat-info {
             color: #bbb;
             font-size: 0.7em;
@@ -779,6 +794,12 @@
         }
 
         function playNotificationSound() {
+            // Only try to play sound if we have user interaction
+            if (audioContext && audioContext.state === 'suspended') {
+                console.log('AudioContext suspended, user interaction required');
+                return;
+            }
+            
             initAudioContext().then(() => {
                 try {
                     const oscillator = audioContext.createOscillator();
@@ -1630,9 +1651,15 @@
             timeInput.type = 'time';
             timeInput.className = 'datetime-input time';
             timeInput.value = currentTime;
+            
+            const saveButton = document.createElement('button');
+            saveButton.type = 'button';
+            saveButton.className = 'datetime-save-btn';
+            saveButton.textContent = 'Save';
 
             inputContainer.appendChild(dateInput);
             inputContainer.appendChild(timeInput);
+            inputContainer.appendChild(saveButton);
             
             // Replace the div with inputs
             targetElement.className = 'task-datetime datetime-editing';
@@ -1644,13 +1671,18 @@
 
             // Handle save on Enter, Tab, or blur
             const saveDateTime = () => {
+                console.log('Save button clicked!');
                 const newDate = dateInput.value;
                 const newTime = timeInput.value;
                 
+                console.log('Current values:', { newDate, newTime, currentDateTime: task.dateTime });
+                
                 if (newDate && newTime) {
                     const newDateTime = new Date(`${newDate}T${newTime}`);
+                    console.log('New datetime:', newDateTime.getTime(), 'vs current:', task.dateTime);
                     
                     if (newDateTime.getTime() !== task.dateTime) {
+                        console.log('Updating task datetime...');
                         console.log(`📅 Updating task "${task.name}" datetime from ${new Date(task.dateTime).toLocaleString()} to ${newDateTime.toLocaleString()}`);
                         
                         // Clear existing timers
@@ -1669,7 +1701,11 @@
                         }
                         
                         saveTasks();
+                    } else {
+                        console.log('No change in datetime, just re-rendering');
                     }
+                } else {
+                    console.log('Missing date or time values');
                 }
                 renderTasks(); // Re-render to show updated datetime
             };
@@ -1678,15 +1714,16 @@
                 renderTasks(); // Re-render to cancel edit
             };
 
-            // Add a slight delay to ensure the values are properly captured before blur
-            const delayedSave = () => {
-                setTimeout(saveDateTime, 50);
-            };
+            // Save button click handler
+            saveButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Save button event triggered');
+                saveDateTime();
+            });
             
-            // Event handlers
+            // Keep keyboard shortcuts
             [dateInput, timeInput].forEach(input => {
-                input.addEventListener('blur', delayedSave);
-                input.addEventListener('change', saveDateTime);
                 input.addEventListener('keydown', (e) => {
                     if (e.key === 'Enter') {
                         e.preventDefault();
@@ -1694,9 +1731,6 @@
                     } else if (e.key === 'Escape') {
                         e.preventDefault();
                         cancelDateTime();
-                    } else if (e.key === 'Tab' && e.target === timeInput) {
-                        // Save when tabbing out of time input
-                        setTimeout(saveDateTime, 100);
                     }
                 });
             });
