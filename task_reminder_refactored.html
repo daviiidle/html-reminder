@@ -215,6 +215,20 @@
             font-size: 0.7em;
         }
 
+        .task-item.overdue {
+            border-left: 3px solid #dc3545;
+            background: #fff5f5;
+        }
+
+        .task-item.upcoming {
+            border-left: 3px solid #28a745;
+        }
+
+        .task-item.today {
+            border-left: 3px solid #ffc107;
+            background: #fffbf0;
+        }
+
         .task-buttons {
             display: flex;
             flex-direction: row;
@@ -1381,7 +1395,14 @@
                     return;
                 }
                 
-                container.innerHTML = this.state.tasks.map(task => this.renderTask(task)).join('');
+                // Sort tasks by datetime (earliest/most urgent first)
+                const sortedTasks = [...this.state.tasks].sort((a, b) => {
+                    return a.dateTime - b.dateTime;
+                });
+                
+                console.log('📋 Rendering tasks in chronological order:', sortedTasks.map(t => `${t.name} (${new Date(t.dateTime).toLocaleString()})`));
+                
+                container.innerHTML = sortedTasks.map(task => this.renderTask(task)).join('');
             }
             
             renderTask(task) {
@@ -1394,8 +1415,22 @@
                 const toggleButton = this.getToggleButton(task);
                 const timeButtons = this.generateTaskTimeButtons(task.id);
                 
+                // Determine task urgency class
+                const now = new Date();
+                const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                const taskDate = new Date(dateTime.getFullYear(), dateTime.getMonth(), dateTime.getDate());
+                
+                let urgencyClass = '';
+                if (dateTime < now) {
+                    urgencyClass = 'overdue';
+                } else if (taskDate.getTime() === today.getTime()) {
+                    urgencyClass = 'today';
+                } else {
+                    urgencyClass = 'upcoming';
+                }
+                
                 return `
-                    <div class="task-item">
+                    <div class="task-item ${urgencyClass}">
                         <div class="task-info">
                             <div class="task-name" onclick="taskEditor.editTaskName(${task.id})" title="Click to edit task name">${this.escapeHtml(task.name)}</div>
                             <div class="task-datetime" onclick="taskEditor.editTaskDateTime(${task.id})" title="Click to edit date and time">${dateStr} at ${timeStr}</div>
