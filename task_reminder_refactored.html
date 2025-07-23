@@ -851,7 +851,7 @@
                 gainNode.connect(this.state.audioContext.destination);
                 
                 oscillator.frequency.setValueAtTime(800, this.state.audioContext.currentTime);
-                gainNode.gain.setValueAtTime(0.1, this.state.audioContext.currentTime);
+                gainNode.gain.setValueAtTime(0.95, this.state.audioContext.currentTime); // Set to 95% volume
                 
                 oscillator.start(this.state.audioContext.currentTime);
                 oscillator.stop(this.state.audioContext.currentTime + 0.1);

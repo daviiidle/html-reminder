@@ -854,20 +854,20 @@
                     // Create a more noticeable triple beep pattern
                     const startTime = audioContext.currentTime;
                     
-                    // First beep - high pitch
+                    // First beep - high pitch (95% volume)
                     oscillator.frequency.setValueAtTime(1000, startTime);
                     gainNode.gain.setValueAtTime(0, startTime);
-                    gainNode.gain.linearRampToValueAtTime(0.3, startTime + 0.02);
+                    gainNode.gain.linearRampToValueAtTime(0.95, startTime + 0.02);
                     gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + 0.15);
                     
-                    // Second beep - medium pitch
+                    // Second beep - medium pitch (95% volume)
                     oscillator.frequency.setValueAtTime(800, startTime + 0.2);
-                    gainNode.gain.setValueAtTime(0.3, startTime + 0.2);
+                    gainNode.gain.setValueAtTime(0.95, startTime + 0.2);
                     gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + 0.35);
                     
-                    // Third beep - high pitch
+                    // Third beep - high pitch (95% volume)
                     oscillator.frequency.setValueAtTime(1000, startTime + 0.4);
-                    gainNode.gain.setValueAtTime(0.3, startTime + 0.4);
+                    gainNode.gain.setValueAtTime(0.95, startTime + 0.4);
                     gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + 0.55);
                     
                     oscillator.start(startTime);
