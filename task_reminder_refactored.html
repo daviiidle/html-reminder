@@ -317,6 +317,11 @@
             display: inline-block;
         }
 
+        .snooze-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
         .dropdown-content {
             display: none;
             position: absolute;
@@ -600,6 +605,35 @@
                             </div>
                         </div>
                     </div>
+                    
+                    <div class="snooze-dropdown">
+                        <button class="btn" onclick="uiController.toggleSnoozeDropdown()" style="background: #007bff; color: white;">Snooze</button>
+                        <div class="dropdown-content" id="snoozeDropdown">
+                            
+                            <div class="dropdown-section">
+                                <h4>Snooze Options</h4>
+                                <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                                    <button class="btn btn-small" onclick="taskManager.snoozeAllOverdue()" style="background: #dc3545; color: white;">Snooze All Overdue</button>
+                                    <button class="btn btn-small" onclick="taskManager.snoozeAllToday()" style="background: #ffc107; color: black;">Snooze All Today</button>
+                                    <button class="btn btn-small" onclick="taskManager.snoozeAllFuture()" style="background: #28a745; color: white;">Snooze All Future</button>
+                                </div>
+                            </div>
+                            
+                            <div class="dropdown-section">
+                                <h4>Snooze Duration</h4>
+                                <div class="adjust-settings">
+                                    <label>Snooze All duration:</label>
+                                    <input type="number" class="adjust-input" id="snoozeAllDuration" value="1" min="1" max="999" style="width: 80px;">
+                                    <select id="snoozeAllUnit" style="padding: 4px 6px; border: 1px solid #ddd; border-radius: 3px; font-size: 12px;">
+                                        <option value="minutes">Minutes</option>
+                                        <option value="hours" selected>Hours</option>
+                                        <option value="days">Days</option>
+                                    </select>
+                                    <button class="btn btn-secondary btn-small" onclick="settingsManager.saveSnoozeAllSettings()">Save</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -696,6 +730,8 @@
                 this.adjustValues = [-30, -15, -5, -1, 1, 5, 15, 30];
                 this.nagIntervalSeconds = 60;
                 this.snoozeMinutes = 5;
+                this.snoozeAllMinutes = 60;
+                this.snoozeAllUnit = 'hours';
                 this.desktopNotificationsEnabled = false;
                 this.audioContext = null;
                 this.soundEnabled = true;
@@ -732,6 +768,8 @@
                     COUNTER: 'taskReminderCounter',
                     NAG_INTERVAL: 'nagIntervalSeconds',
                     SNOOZE: 'snoozeMinutes',
+                    SNOOZE_ALL: 'snoozeAllMinutes',
+                    SNOOZE_ALL_UNIT: 'snoozeAllUnit',
                     NOTIFICATIONS: 'desktopNotificationsEnabled',
                     ADJUST_VALUES: 'quickAdjustValues'
                 };
@@ -1335,6 +1373,143 @@
                 alert(message);
             }
             
+            snoozeAllOverdue() {
+                const now = new Date();
+                let snoozedCount = 0;
+                
+                this.state.tasks.forEach(task => {
+                    if (task.status === 'active') {
+                        const taskDateTime = new Date(task.dateTime);
+                        if (taskDateTime < now) {
+                            // This task is overdue - snooze it
+                            const snoozeMs = this.state.snoozeAllMinutes * 60 * 1000;
+                            const newDateTime = new Date(now.getTime() + snoozeMs);
+                            
+                            // Update the task's dateTime
+                            task.dateTime = newDateTime.toISOString();
+                            
+                            // Clear existing timers and reschedule
+                            this.scheduler.clearTaskTimers(task);
+                            this.scheduler.scheduleTask(task);
+                            
+                            snoozedCount++;
+                            console.log(`💤 Snoozed overdue task "${task.name}" to ${newDateTime.toLocaleString()}`);
+                        }
+                    }
+                });
+                
+                this.saveAndRender();
+                
+                const message = snoozedCount > 0 
+                    ? `💤 Snoozed ${snoozedCount} overdue task${snoozedCount > 1 ? 's' : ''} for ${this.state.snoozeAllMinutes} minute${this.state.snoozeAllMinutes > 1 ? 's' : ''}.`
+                    : 'ℹ️ No overdue tasks to snooze.';
+                alert(message);
+            }
+            
+            setTaskToNow(taskId) {
+                const task = this.state.findTask(taskId);
+                if (!task) return;
+                
+                const now = new Date();
+                const previousTime = new Date(task.dateTime).toLocaleString();
+                
+                // Update the task's dateTime to current time
+                task.dateTime = now.toISOString();
+                
+                // Clear existing timers and reschedule
+                this.scheduler.clearTaskTimers(task);
+                this.scheduler.scheduleTask(task);
+                
+                this.saveAndRender();
+                
+                console.log(`⏰ Task "${task.name}" time updated from ${previousTime} to ${now.toLocaleString()}`);
+                
+                // Show brief confirmation
+                const taskElement = document.querySelector(`[data-task-id="${taskId}"]`);
+                if (taskElement) {
+                    const originalBg = taskElement.style.backgroundColor;
+                    taskElement.style.backgroundColor = '#d4edda';
+                    taskElement.style.transition = 'background-color 0.3s';
+                    
+                    setTimeout(() => {
+                        taskElement.style.backgroundColor = originalBg;
+                    }, 1000);
+                }
+            }
+            
+            snoozeAllToday() {
+                const now = new Date();
+                const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                const endOfDay = new Date(today.getTime() + 24 * 60 * 60 * 1000 - 1);
+                let snoozedCount = 0;
+                
+                this.state.tasks.forEach(task => {
+                    if (task.status === 'active') {
+                        const taskDateTime = new Date(task.dateTime);
+                        const taskDate = new Date(taskDateTime.getFullYear(), taskDateTime.getMonth(), taskDateTime.getDate());
+                        
+                        // Check if task is today (including overdue from today or future tasks today)
+                        if (taskDate.getTime() === today.getTime()) {
+                            const snoozeMs = this.state.snoozeAllMinutes * 60 * 1000;
+                            const newDateTime = new Date(now.getTime() + snoozeMs);
+                            
+                            // Update the task's dateTime
+                            task.dateTime = newDateTime.toISOString();
+                            
+                            // Clear existing timers and reschedule
+                            this.scheduler.clearTaskTimers(task);
+                            this.scheduler.scheduleTask(task);
+                            
+                            snoozedCount++;
+                            console.log(`💤 Snoozed today's task "${task.name}" to ${newDateTime.toLocaleString()}`);
+                        }
+                    }
+                });
+                
+                this.saveAndRender();
+                
+                const message = snoozedCount > 0 
+                    ? `💤 Snoozed ${snoozedCount} task${snoozedCount > 1 ? 's' : ''} from today for ${this.state.snoozeAllMinutes} minute${this.state.snoozeAllMinutes > 1 ? 's' : ''}.`
+                    : 'ℹ️ No tasks from today to snooze.';
+                alert(message);
+            }
+            
+            snoozeAllFuture() {
+                const now = new Date();
+                const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                let snoozedCount = 0;
+                
+                this.state.tasks.forEach(task => {
+                    if (task.status === 'active') {
+                        const taskDateTime = new Date(task.dateTime);
+                        const taskDate = new Date(taskDateTime.getFullYear(), taskDateTime.getMonth(), taskDateTime.getDate());
+                        
+                        // Check if task is in the future (after today)
+                        if (taskDate.getTime() > today.getTime()) {
+                            const snoozeMs = this.state.snoozeAllMinutes * 60 * 1000;
+                            const newDateTime = new Date(now.getTime() + snoozeMs);
+                            
+                            // Update the task's dateTime
+                            task.dateTime = newDateTime.toISOString();
+                            
+                            // Clear existing timers and reschedule
+                            this.scheduler.clearTaskTimers(task);
+                            this.scheduler.scheduleTask(task);
+                            
+                            snoozedCount++;
+                            console.log(`💤 Snoozed future task "${task.name}" to ${newDateTime.toLocaleString()}`);
+                        }
+                    }
+                });
+                
+                this.saveAndRender();
+                
+                const message = snoozedCount > 0 
+                    ? `💤 Snoozed ${snoozedCount} future task${snoozedCount > 1 ? 's' : ''} for ${this.state.snoozeAllMinutes} minute${this.state.snoozeAllMinutes > 1 ? 's' : ''}.`
+                    : 'ℹ️ No future tasks to snooze.';
+                alert(message);
+            }
+            
             calculateNextOccurrence(task) {
                 const current = new Date(task.dateTime);
                 const { repeatType, interval, intervalUnit } = task;
@@ -1436,7 +1611,7 @@
                 }
                 
                 return `
-                    <div class="task-item ${urgencyClass}">
+                    <div class="task-item ${urgencyClass}" data-task-id="${task.id}">
                         <div class="task-info">
                             <div class="task-name" onclick="taskEditor.editTaskName(${task.id})" title="Click to edit task name">${this.escapeHtml(task.name)}</div>
                             <div class="task-datetime" onclick="taskEditor.editTaskDateTime(${task.id})" title="Click to edit date and time">${dateStr} at ${timeStr}</div>
@@ -1449,6 +1624,7 @@
                         </div>
                         <div class="task-buttons">
                             ${toggleButton}
+                            <button class="btn btn-small" onclick="taskManager.setTaskToNow(${task.id})" style="background: #17a2b8; color: white;">Now</button>
                             <button class="btn btn-success btn-small" onclick="taskManager.completeTask(${task.id})">Complete</button>
                             <button class="btn btn-secondary btn-small" onclick="taskEditor.editTask(${task.id})">Edit</button>
                             <button class="btn btn-danger btn-small" onclick="taskManager.removeTask(${task.id})">Remove</button>
@@ -1881,6 +2057,45 @@
                 alert(`💤 Snooze duration set to ${this.state.snoozeMinutes} minute${this.state.snoozeMinutes > 1 ? 's' : ''}!`);
             }
             
+            saveSnoozeAllSettings() {
+                const snoozeAllValue = parseInt(document.getElementById('snoozeAllDuration').value);
+                const snoozeAllUnit = document.getElementById('snoozeAllUnit').value;
+                
+                if (!snoozeAllValue || snoozeAllValue < 1) {
+                    alert('⚠️ Snooze All duration must be at least 1.');
+                    return;
+                }
+                
+                if (snoozeAllValue > 999) {
+                    alert('⚠️ Maximum Snooze All duration is 999.');
+                    return;
+                }
+                
+                // Convert to minutes for internal storage
+                let totalMinutes;
+                switch(snoozeAllUnit) {
+                    case 'minutes':
+                        totalMinutes = snoozeAllValue;
+                        break;
+                    case 'hours':
+                        totalMinutes = snoozeAllValue * 60;
+                        break;
+                    case 'days':
+                        totalMinutes = snoozeAllValue * 60 * 24;
+                        break;
+                    default:
+                        totalMinutes = snoozeAllValue;
+                }
+                
+                this.state.snoozeAllMinutes = totalMinutes;
+                this.state.snoozeAllUnit = snoozeAllUnit;
+                
+                this.storage.saveSetting(this.storage.KEYS.SNOOZE_ALL, this.state.snoozeAllMinutes);
+                this.storage.saveSetting(this.storage.KEYS.SNOOZE_ALL_UNIT, this.state.snoozeAllUnit);
+                
+                alert(`💤 Snooze All duration set to ${snoozeAllValue} ${snoozeAllUnit}!`);
+            }
+            
             saveAdjustSettings() {
                 const values = [];
                 for (let i = 1; i <= 8; i++) {
@@ -1995,9 +2210,18 @@
                 }
             }
             
+            toggleSnoozeDropdown() {
+                const dropdown = document.getElementById('snoozeDropdown');
+                dropdown.classList.toggle('show');
+                
+                if (dropdown.classList.contains('show')) {
+                    this.setupDropdownCloseHandler(dropdown);
+                }
+            }
+            
             setupDropdownCloseHandler(dropdown) {
                 const closeDropdown = (e) => {
-                    if (!e.target.closest('.settings-dropdown')) {
+                    if (!e.target.closest('.settings-dropdown') && !e.target.closest('.snooze-dropdown')) {
                         dropdown.classList.remove('show');
                         document.removeEventListener('click', closeDropdown);
                     }
@@ -2197,6 +2421,8 @@
                     ['adjustValues', 'ADJUST_VALUES', [-30, -15, -5, -1, 1, 5, 15, 30]],
                     ['nagIntervalSeconds', 'NAG_INTERVAL', 60],
                     ['snoozeMinutes', 'SNOOZE', 5],
+                    ['snoozeAllMinutes', 'SNOOZE_ALL', 1],
+                    ['snoozeAllUnit', 'SNOOZE_ALL_UNIT', 'hours'],
                     ['desktopNotificationsEnabled', 'NOTIFICATIONS', false]
                 ];
                 
@@ -2231,6 +2457,23 @@
                 
                 // Update snooze duration
                 document.getElementById('snoozeDuration').value = this.state.snoozeMinutes;
+                
+                // Update snooze all duration and unit
+                const snoozeAllUnit = document.getElementById('snoozeAllUnit');
+                snoozeAllUnit.value = this.state.snoozeAllUnit;
+                
+                // Convert minutes back to the selected unit for display
+                let displayValue = this.state.snoozeAllMinutes;
+                switch(this.state.snoozeAllUnit) {
+                    case 'hours':
+                        displayValue = Math.round(displayValue / 60);
+                        break;
+                    case 'days':
+                        displayValue = Math.round(displayValue / (60 * 24));
+                        break;
+                    // 'minutes' case - no conversion needed
+                }
+                document.getElementById('snoozeAllDuration').value = displayValue;
                 
                 // Update notification toggle
                 this.settingsManager.updateNotificationToggle();
