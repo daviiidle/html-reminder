@@ -1576,12 +1576,34 @@
                     return;
                 }
                 
-                // Sort tasks by datetime (earliest/most urgent first)
+                // Sort tasks by urgency priority first, then by datetime within each group
                 const sortedTasks = [...this.state.tasks].sort((a, b) => {
-                    return a.dateTime - b.dateTime;
+                    const now = new Date();
+                    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                    
+                    // Helper function to get urgency priority (lower number = higher priority)
+                    const getUrgencyPriority = (task) => {
+                        const taskDateTime = new Date(task.dateTime);
+                        const taskDate = new Date(taskDateTime.getFullYear(), taskDateTime.getMonth(), taskDateTime.getDate());
+                        
+                        if (taskDateTime < now) return 1; // Overdue (red) - highest priority
+                        if (taskDate.getTime() === today.getTime()) return 2; // Today (yellow) - medium priority  
+                        return 3; // Future (green) - lowest priority
+                    };
+                    
+                    const priorityA = getUrgencyPriority(a);
+                    const priorityB = getUrgencyPriority(b);
+                    
+                    // First sort by urgency priority
+                    if (priorityA !== priorityB) {
+                        return priorityA - priorityB;
+                    }
+                    
+                    // Within same urgency group, sort by datetime (earliest first)
+                    return new Date(a.dateTime) - new Date(b.dateTime);
                 });
                 
-                console.log('📋 Rendering tasks in chronological order:', sortedTasks.map(t => `${t.name} (${new Date(t.dateTime).toLocaleString()})`));
+                console.log('📋 Rendering tasks by urgency priority (overdue → today → future):', sortedTasks.map(t => `${t.name} (${new Date(t.dateTime).toLocaleString()})`));
                 
                 container.innerHTML = sortedTasks.map(task => this.renderTask(task)).join('');
             }
